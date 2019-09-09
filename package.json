@@ -14,7 +14,7 @@
     "build-proto": "scripts/build-proto.sh",
     "build-ts": "tsc",
     "lint": "tslint -c tslint.json -p tsconfig.json",
-    "start": "check-engine package.json && ts-node src/core/grpc-server.ts",
+    "start": "check-engine package.json && node -r ts-node/register src/core/grpc-server.ts",
     "test": "nyc mocha -r ts-node/register test/*.ts test/**/*.ts",
     "version": "crank cog:readme automatoninc/inbox-mailgun && git add README.md"
   },
@@ -56,8 +56,11 @@
     "typescript": "^3.5.1"
   },
   "dependencies": {
+    "@types/mailgun-js": "^0.22.3",
     "google-protobuf": "^3.8.0",
     "grpc": "^1.21.1",
+    "https": "^1.0.0",
+    "mailgun-js": "^0.22.0",
     "needle": "^2.4.0",
     "ts-node": "^8.3.0"
   }
