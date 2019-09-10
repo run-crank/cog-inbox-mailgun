@@ -1,4 +1,4 @@
 export interface Storage {
-  url: string;
-  key: string;
+  url?: string;
+  key?: string;
 }

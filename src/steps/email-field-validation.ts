@@ -4,12 +4,12 @@ import { BaseStep, Field, StepInterface } from '../core/base-step';
 import { Step, FieldDefinition, StepDefinition } from '../proto/cog_pb';
 import { Email, Inbox } from '../models';
 
-export class EmailFieldValidation extends BaseStep implements StepInterface {
-  private operators: string[] = ['Is Exactly', 'Contains', 'Does not Contain'];
+export class EmailFieldValidationStep extends BaseStep implements StepInterface {
+  private operators: string[] = ['should contain', 'should not contain', 'should be'];
 
-  protected stepName: string = 'Check a field on a Mailgun Email';
+  protected stepName: string = 'Validate a field on a Mailgun Email';
   // tslint:disable-next-line:max-line-length
-  protected stepExpression: string = 'the (?<field>[a-zA-Z0-9_-]+) field of the email in position (?<position>[a-zA-Z0-9_-]+) from the inbox of (?<email>.+), (?<operator>.+) "(?<expectation>.+)"';
+  protected stepExpression: string = 'the (?<field>(subject|body|from)) of the (?<position>\d+)(?:(st|nd|rd|th))? mailgun email for (?<email>.+) (?<operator>(should contain|should not contain|should be)) (?<expectation>.+)';
   protected stepType: StepDefinition.Type = StepDefinition.Type.VALIDATION;
   protected expectedFields: Field[] = [{
     field: 'email',
@@ -30,7 +30,7 @@ export class EmailFieldValidation extends BaseStep implements StepInterface {
   }, {
     field: 'operator',
     type: FieldDefinition.Type.STRING,
-    description: 'The operator to use when performing the validation. Supported values are: Is Exactly, Contains, Does not Contain',
+    description: 'The operator to use when performing the validation. Current supported values are: should contain, should not contain, and should be',
   }];
 
   async executeStep(step: Step) {
@@ -41,31 +41,25 @@ export class EmailFieldValidation extends BaseStep implements StepInterface {
     const operator = stepData.operator;
 
     try {
-      if (!this.operators.includes(operator)) {
-        return this.fail('Invalid operator. "%s" is not supported.', [
-          operator,
-        ]);
-      }
-
       const inbox: Inbox = await this.client.getInbox(stepData.email);
 
       if (!inbox || inbox === null) {
-        return this.fail('Cannot fetch inbox for: "%s"', [
+        return this.error('Cannot fetch inbox for: %s', [
           stepData.email,
         ]);
       }
 
       if (!inbox.items[position - 1]) {
-        return this.fail('Cannot fetch email in position: "%s"', [
+        return this.error('Cannot fetch email in position: %s', [
           position,
         ]);
       }
 
-      // tslint:disable-next-line:max-line-length
-      const email: Email = await this.client.getEmailByStorageUrl(inbox.items[position - 1].storage.url);
+      const storageUrl: string = inbox.items[position - 1].storage.url;
+      const email: Email = await this.client.getEmailByStorageUrl(storageUrl);
 
       if (email === null || !email) {
-        return this.fail('Cannot fetch email in position: "%s"', [
+        return this.error('Cannot fetch email in position: %s', [
           position,
         ]);
       }
@@ -77,13 +71,14 @@ export class EmailFieldValidation extends BaseStep implements StepInterface {
           email[field],
         ]);
       } else {
-        return this.fail('Comparison failed using: "%s" operator. Actual: "%s" Expected: "%s"', [
+        return this.fail('Comparison failed using: %s operator. Actual: %s Expected: %s', [
           operator,
           email[field],
           expectation,
         ]);
       }
     } catch (e) {
+      console.log(e.toString());
       return this.error('There was an error reaching mailgun: %s', [e.toString()]);
     }
   }
@@ -91,11 +86,11 @@ export class EmailFieldValidation extends BaseStep implements StepInterface {
   executeComparison(expected: string, actual: string, operator: string): boolean {
     let result: boolean = false;
 
-    if (operator === 'Is Exactly') {
+    if (operator === 'should be') {
       result = expected === actual;
-    } else if (operator === 'Contains') {
+    } else if (operator === 'should contain') {
       result = actual.toLowerCase().includes(expected.toLowerCase());
-    } else if (operator === 'Does not Contain') {
+    } else if (operator === 'should not contain') {
       result = !actual.toLowerCase().includes(expected.toLowerCase());
     }
 
@@ -103,4 +98,4 @@ export class EmailFieldValidation extends BaseStep implements StepInterface {
   }
 }
 
-export { EmailFieldValidation as Step };
+export { EmailFieldValidationStep as Step };
