@@ -7,9 +7,9 @@ import { Email, Inbox } from '../models';
 export class EmailFieldValidationStep extends BaseStep implements StepInterface {
   private operators: string[] = ['should contain', 'should not contain', 'should be'];
 
-  protected stepName: string = 'Validate a field on a Mailgun Email';
+  protected stepName: string = 'Check a field on a Mailgun Email';
   // tslint:disable-next-line:max-line-length
-  protected stepExpression: string = 'the (?<field>(subject|body|from)) of the (?<position>\d+)(?:(st|nd|rd|th))? mailgun email for (?<email>.+) (?<operator>(should contain|should not contain|should be)) (?<expectation>.+)';
+  protected stepExpression: string = 'the (?<field>(subject|body-html|body-full|from)) of the (?<position>\d+)(?:(st|nd|rd|th))? mailgun email for (?<email>.+) (?<operator>(should contain|should not contain|should be)) (?<expectation>.+)';
   protected stepType: StepDefinition.Type = StepDefinition.Type.VALIDATION;
   protected expectedFields: Field[] = [{
     field: 'email',
