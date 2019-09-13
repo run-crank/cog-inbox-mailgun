@@ -1,0 +1,110 @@
+import { Struct } from 'google-protobuf/google/protobuf/struct_pb';
+import * as chai from 'chai';
+import { default as sinon } from 'ts-sinon';
+import * as sinonChai from 'sinon-chai';
+import 'mocha';
+
+import { Step as ProtoStep, StepDefinition, FieldDefinition, RunStepResponse } from '../../src/proto/cog_pb';
+import { Step } from '../../src/steps/email-count-equals';
+import { Inbox } from '../../src/models';
+
+chai.use(sinonChai);
+
+describe('EmailCountEqualsStep', () => {
+  const expect = chai.expect;
+  let protoStep: ProtoStep;
+  let stepUnderTest: Step;
+  let clientWrapperStub: any;
+
+  beforeEach(() => {
+    protoStep = new ProtoStep();
+    clientWrapperStub = sinon.stub();
+    clientWrapperStub.getInbox = sinon.stub();
+
+    stepUnderTest = new Step(clientWrapperStub);
+  });
+
+  describe('Fields', () => {
+    it('should return expected step fields', () => {
+      const definition: StepDefinition = stepUnderTest.getDefinition();
+      const fields: any[] = definition.getExpectedFieldsList().map(f => f.toObject());
+
+      expect(fields[0].key).to.equal('email');
+      expect(fields[0].optionality).to.equal(FieldDefinition.Optionality.REQUIRED);
+      expect(fields[0].type).to.equal(FieldDefinition.Type.EMAIL);
+
+      expect(fields[1].key).to.equal('count');
+      expect(fields[1].optionality).to.equal(FieldDefinition.Optionality.REQUIRED);
+      expect(fields[1].type).to.equal(FieldDefinition.Type.NUMERIC);
+    });
+  });
+
+  describe('Metadata', () => {
+    it('should return expected step metadata', () => {
+      const def: StepDefinition = stepUnderTest.getDefinition();
+      expect(def.getStepId()).to.equal('EmailCountEqualsStep');
+      expect(def.getName()).to.equal('Check the email count on a Mailgun Inbox');
+      expect(def.getExpression()).to.equal('there should be (?<count>\\d+) emails in mailgun for (?<email>.+)');
+      expect(def.getType()).to.equal(StepDefinition.Type.VALIDATION);
+    });
+  });
+
+  describe('Inbox not found', () => {
+    beforeEach(() => {
+      clientWrapperStub.getInbox.returns(Promise.resolve(null));
+    });
+
+    it('should respond with error', async () => {
+      const response: RunStepResponse = await stepUnderTest.executeStep(protoStep);
+      expect(response.getOutcome()).to.equal(RunStepResponse.Outcome.ERROR);
+    });
+  });
+
+  describe('Expected count equals inbox items count', () => {
+    beforeEach(() => {
+      const inbox: Inbox = { items: [{}, {}] };
+      clientWrapperStub.getInbox.returns(Promise.resolve(inbox));
+    });
+
+    it('should respond with pass', async () => {
+      protoStep.setData(Struct.fromJavaScript({
+        email: 'someone@thisisjust.atomatest.com',
+        count: 2,
+      }));
+
+      const response: RunStepResponse = await stepUnderTest.executeStep(protoStep);
+
+      expect(response.getOutcome()).to.equal(RunStepResponse.Outcome.PASSED);
+    });
+
+    // it('should respond with expected message', async () => {
+    //   const expectedMessage: string = 'Found 2 emails, as expected';
+    //   const response: RunStepResponse = await stepUnderTest.executeStep(protoStep);
+    //   expect(response.getMessageFormat).to.equal(RunStepResponse.Outcome.PASSED);
+    // });
+  });
+
+  describe('Expected count not equal to inbox items count', () => {
+    beforeEach(() => {
+      const inbox: Inbox = { items: [{}] };
+      clientWrapperStub.getInbox.returns(Promise.resolve(inbox));
+    });
+
+    it('should respond with fail', async () => {
+      protoStep.setData(Struct.fromJavaScript({
+        email: 'someone@thisisjust.atomatest.com',
+        count: 2,
+      }));
+
+      const response: RunStepResponse = await stepUnderTest.executeStep(protoStep);
+
+      expect(response.getOutcome()).to.equal(RunStepResponse.Outcome.FAILED);
+    });
+
+    // it('should respond with expected message', async () => {
+    //   const expectedMessage: string = 'Found 2 emails, as expected';
+    //   const response: RunStepResponse = await stepUnderTest.executeStep(protoStep);
+    //   expect(response.getMessageFormat).to.equal(RunStepResponse.Outcome.PASSED);
+    // });
+  });
+});
