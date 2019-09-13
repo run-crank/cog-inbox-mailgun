@@ -60,7 +60,7 @@ describe('EmailFieldValidationStep', () => {
     it('should return expected step metadata', () => {
       const stepDef: StepDefinition = stepUnderTest.getDefinition();
       expect(stepDef.getStepId()).to.equal('EmailFieldValidationStep');
-      expect(stepDef.getName()).to.equal('Validate a field on a Mailgun Email');
+      expect(stepDef.getName()).to.equal('Check a field on a Mailgun Email');
       expect(stepDef.getExpression()).to.equal('the (?<field>(subject|body|from)) of the (?<position>\d+)(?:(st|nd|rd|th))? mailgun email for (?<email>.+) (?<operator>(should contain|should not contain|should be)) (?<expectation>.+)');
       expect(stepDef.getType()).to.equal(StepDefinition.Type.VALIDATION);
     });
