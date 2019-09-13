@@ -5,7 +5,7 @@ import { Inbox } from '../models';
 /*tslint:disable:no-else-after-return*/
 export class EmailCountEqualsStep extends BaseStep implements StepInterface {
 
-  protected stepName: string = 'Check a field on a Mailgun Email';
+  protected stepName: string = 'Check the email count on a Mailgun Inbox';
   // tslint:disable-next-line:max-line-length
   protected stepExpression: string = 'there should be (?<count>\\d+) emails in mailgun for (?<email>.+)';
   protected stepType: StepDefinition.Type = StepDefinition.Type.VALIDATION;
@@ -16,7 +16,7 @@ export class EmailCountEqualsStep extends BaseStep implements StepInterface {
   }, {
     field: 'count',
     type: FieldDefinition.Type.NUMERIC,
-    description: 'Email to count',
+    description: 'The email count',
   }];
 
   async executeStep(step: Step) {
