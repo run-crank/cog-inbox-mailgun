@@ -41,6 +41,16 @@ export class EmailFieldValidationStep extends BaseStep implements StepInterface 
     const operator = stepData.operator;
 
     try {
+      const domain: string = stepData.email.split('@')[1];
+      const authDomain: string = this.client.auth.get('domain').toString();
+
+      if (domain !== authDomain) {
+        return this.error('Can\'t check inbox for %s: email domain doesn\'t match %s', [
+          stepData.email,
+          authDomain,
+        ]);
+      }
+
       const inbox: Inbox = await this.client.getInbox(stepData.email);
 
       if (!inbox || inbox === null) {
@@ -59,7 +69,7 @@ export class EmailFieldValidationStep extends BaseStep implements StepInterface 
         ]);
       }
 
-      const storageUrl: string = inbox.items[position - 1].storage.url;
+      const storageUrl: string = inbox.items.reverse()[position - 1].storage.url;
       const email: Email = await this.client.getEmailByStorageUrl(storageUrl);
 
       if (email === null || !email) {
@@ -69,26 +79,28 @@ export class EmailFieldValidationStep extends BaseStep implements StepInterface 
       }
 
       if (this.executeComparison(expectation, email[field], operator)) {
-        return this.pass('Expected value %s %s %s', [
-          expectation,
+        return this.pass('Check on email %s passed: %s %s "%s"', [
+          field,
+          field,
           operator,
-          email[field],
+          expectation,
         ]);
       } else {
-        return this.fail('Comparison failed using: %s operator. Actual: %s Expected: %s', [
+        return this.fail('Check on email %s failed: %s %s "%s", but it was actually %s', [
+          field,
+          field,
           operator,
-          email[field],
           expectation,
+          email[field],
         ]);
       }
     } catch (e) {
-      return this.error('There was an error reaching mailgun: %s', [e.toString()]);
+      return this.error('There was an error retrieving email messages: %s', [e.toString()]);
     }
   }
 
   executeComparison(expected: string, actual: string, operator: string): boolean {
     let result: boolean = false;
-
     if (actual === undefined) {
       return false;
     }

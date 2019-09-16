@@ -20,6 +20,11 @@ describe('EmailCountEqualsStep', () => {
     protoStep = new ProtoStep();
     clientWrapperStub = sinon.stub();
     clientWrapperStub.getInbox = sinon.stub();
+    clientWrapperStub.auth = {
+      get: sinon.stub(),
+    };
+
+    clientWrapperStub.auth.get.withArgs('domain').returns('thisisjust.atomatest.com');
 
     stepUnderTest = new Step(clientWrapperStub);
   });
@@ -46,6 +51,22 @@ describe('EmailCountEqualsStep', () => {
       expect(def.getName()).to.equal('Check the email count on a Mailgun Inbox');
       expect(def.getExpression()).to.equal('there should be (?<count>\\d+) emails in mailgun for (?<email>.+)');
       expect(def.getType()).to.equal(StepDefinition.Type.VALIDATION);
+    });
+  });
+
+  describe('Mismatch domain', () => {
+    beforeEach(() => {
+      clientWrapperStub.auth.get.withArgs('domain').returns('mismatch.com');
+      protoStep.setData(Struct.fromJavaScript({
+        email: 'someone@thisisjust.atomatest.com',
+        field: 'subject',
+        position: 1028,
+      }));
+    });
+
+    it('should return fail', async () => {
+      const response = await stepUnderTest.executeStep(protoStep);
+      expect(response.getOutcome()).to.equal(RunStepResponse.Outcome.ERROR);
     });
   });
 
@@ -76,17 +97,11 @@ describe('EmailCountEqualsStep', () => {
 
       expect(response.getOutcome()).to.equal(RunStepResponse.Outcome.PASSED);
     });
-
-    // it('should respond with expected message', async () => {
-    //   const expectedMessage: string = 'Found 2 emails, as expected';
-    //   const response: RunStepResponse = await stepUnderTest.executeStep(protoStep);
-    //   expect(response.getMessageFormat).to.equal(RunStepResponse.Outcome.PASSED);
-    // });
   });
 
   describe('Expected count not equal to inbox items count', () => {
     beforeEach(() => {
-      const inbox: Inbox = { items: [{}] };
+      const inbox: Object = { items: [{ message: { headers: { subject: '' } } }] };
       clientWrapperStub.getInbox.returns(Promise.resolve(inbox));
     });
 
@@ -100,11 +115,5 @@ describe('EmailCountEqualsStep', () => {
 
       expect(response.getOutcome()).to.equal(RunStepResponse.Outcome.FAILED);
     });
-
-    // it('should respond with expected message', async () => {
-    //   const expectedMessage: string = 'Found 2 emails, as expected';
-    //   const response: RunStepResponse = await stepUnderTest.executeStep(protoStep);
-    //   expect(response.getMessageFormat).to.equal(RunStepResponse.Outcome.PASSED);
-    // });
   });
 });
