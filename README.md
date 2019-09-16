@@ -72,6 +72,17 @@ section below.
 
 <!-- run `crank cog:readme automatoninc/inbox-mailgun` to update -->
 <!-- authenticationDetails -->
+You will be asked for the following authentication details on installation.
+
+- **apiKey**: Mailgun API Key
+- **domain**: Email Domain
+- **endpoint**: Mailgun API Endpoint
+
+```shell-session
+# Re-authenticate by running this
+$ crank cog:auth automatoninc/inbox-mailgun
+```
+<!-- authenticationDetailsEnd -->
 
 Note:
 - Your `Mailgun API Key` can be found on the [API security page][mailgun-api-key],
@@ -87,6 +98,25 @@ Scenario files.
 
 <!-- run `crank cog:readme automatoninc/inbox-mailgun` to update -->
 <!-- stepDetails -->
+<h4 id="EmailCountEqualsStep">Check the email count on a Mailgun Inbox</h4>
+
+- **Expression**: `there should be (?<count>\d+) emails in mailgun for (?<email>.+)`
+- **Expected Data**:
+  - `email`: The inbox's email address
+  - `count`: The email count
+- **Step ID**: `EmailCountEqualsStep`
+
+<h4 id="EmailFieldValidationStep">Check a field on a Mailgun Email</h4>
+
+- **Expression**: `the (?<field>(subject|body-html|body-plain|from)) of the (?<position>\d+)(?:(st|nd|rd|th))? mailgun email for (?<email>.+) (?<operator>(should contain|should not contain|should be)) (?<expectation>.+)`
+- **Expected Data**:
+  - `email`: The inbox's email address
+  - `field`: Field name to check
+  - `expectation`: Expected field value
+  - `position`: The nth message to check from the email's inbox
+  - `operator`: The operator to use when performing the validation. Current supported values are: should contain, should not contain, and should be
+- **Step ID**: `EmailFieldValidationStep`
+<!-- stepDetailsEnd -->
 
 ## Development and Contributing
 Pull requests are welcome. For major changes, please open an issue first to
