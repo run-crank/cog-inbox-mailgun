@@ -39,9 +39,17 @@ describe('Cog:GetManifest', () => {
       });
 
       // Useragent auth field
-      const ua: any = authFields.filter(a => a.key === 'userAgent')[0];
+      const ua = authFields.find(a => a.key === 'apiKey');
       expect(ua.type).to.equal(FieldDefinition.Type.STRING);
       expect(ua.optionality).to.equal(FieldDefinition.Optionality.REQUIRED);
+
+      const domain = authFields.find(a => a.key === 'domain');
+      expect(domain.type).to.equal(FieldDefinition.Type.STRING);
+      expect(domain.optionality).to.equal(FieldDefinition.Optionality.REQUIRED);
+
+      const endpoint = authFields.find(a => a.key === 'endpoint');
+      expect(endpoint.type).to.equal(FieldDefinition.Type.STRING);
+      expect(endpoint.optionality).to.equal(FieldDefinition.Optionality.REQUIRED);
 
       done();
     });
