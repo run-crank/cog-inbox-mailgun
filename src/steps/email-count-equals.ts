@@ -31,6 +31,10 @@ export class EmailCountEqualsStep extends BaseStep implements StepInterface {
         ]);
       }
 
+      if (inbox['message']) {
+        return this.error(inbox['message']);
+      }
+
       // tslint:disable-next-line:triple-equals
       if (inbox.items.length == stepData.count) {
         return this.pass('Found %s emails, as expected', [

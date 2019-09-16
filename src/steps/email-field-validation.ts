@@ -49,6 +49,10 @@ export class EmailFieldValidationStep extends BaseStep implements StepInterface 
         ]);
       }
 
+      if (inbox['message']) {
+        return this.error(inbox['message']);
+      }
+
       if (!inbox.items[position - 1]) {
         return this.error('Cannot fetch email in position: %s', [
           position,

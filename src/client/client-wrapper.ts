@@ -19,6 +19,10 @@ export class ClientWrapper {
     description: 'Mailgun API Endpoint',
   }];
 
+  private errors: Object = {
+    'Invalid private keys': 'Auth error: Invalid private key',
+    'Unknown domain': 'Auth error: Unknown domain',
+  };
   private auth: grpc.Metadata;
   private basicAuth: string;
   private client: any;
@@ -43,6 +47,11 @@ export class ClientWrapper {
 
         res.on('end', () => {
           const inbox: Inbox = JSON.parse(data);
+
+          if (Object.keys(this.errors).includes(inbox['message'])) {
+            inbox['message'] = this.errors[inbox['message']];
+          }
+
           resolve(inbox);
         });
       });
@@ -54,20 +63,24 @@ export class ClientWrapper {
   public async getEmailByStorageUrl(storageUrl: string): Promise<Email> {
     const result: Promise<Email> = new Promise((resolve, reject) => {
       https.get(storageUrl, { headers: { Authorization: this.basicAuth } }, (res) => {
-        let data: any = '';
+        let data: string = '';
 
         res.on('data', (chunk) => {
           data += chunk;
         });
 
         res.on('end', () => {
-          const jsonData: Object = JSON.parse(data);
+          const email: Object = JSON.parse(data);
 
-          if (jsonData['message'] === 'Message not found') {
+          if (email['message'] === 'Message not found') {
             resolve(null);
           }
 
-          resolve(<Email>jsonData);
+          if (Object.keys(this.errors).includes(email['message'])) {
+            email['message'] = this.errors[email['message']];
+          }
+
+          resolve(<Email>email);
         });
       });
     });
