@@ -1,30 +1,85 @@
 # Inbox (Mailgun) Cog
 
-This is a [Crank][what-is-crank] Cog for Inbox (Mailgun), providing
-steps and assertions for you to validate the state and behavior of your
-Inbox (Mailgun) instance.
+[![CircleCI](https://circleci.com/gh/run-crank/cog-inbox-mailgun/tree/master.svg?style=svg)](https://circleci.com/gh/run-crank/cog-inbox-mailgun/tree/master)
+
+This is a [Crank][what-is-crank] Cog for validating receipt and contents of
+emails. Use it in combination with other Cogs to validate that SaaS systems are
+sending the right emails with the right contents/personalization, in the right
+amount of time. Common use-cases include welcome emails, confirmation emails,
+and nurture/drip emails, triggered by configurations or activity on web forms,
+automation platforms, CRMs, etc.
+
+In order to make use of this Cog, you will need a Mailgun account, configured
+as described below in the Setup section.
 
 * [Installation](#installation)
+* [Setup](#setup)
 * [Usage](#usage)
 * [Development and Contributing](#development-and-contributing)
 
 ## Installation
 
 Ensure you have the `crank` CLI and `docker` installed and running locally,
-then run the following.  You'll be prompted to enter your Inbox (Mailgun)
+then run the following.  You'll be prompted to enter your Mailgun API
 credentials once the Cog is successfully installed.
 
 ```shell-session
-$ crank cog:install automatoninc/inbox-mailgun
+$ crank cog:install automatoninc/inbox-mailgun --ignore-auth
 ```
 
-Note: You can always re-authenticate later.
+## Setup
+
+This Cog leverages Mailgun's email receiving and storage capabilities to make
+assertions about the subject, body (HTML and plain text) and from lines of
+emails sent to a domain configured for use with Mailgun.
+
+**Prerequisites**:
+- A domain or subdomain whose DNS records you can access/modify,
+- A [Mailgun account][sign-up-for-mailgun] (a free/trial version will work for
+  most use-cases),
+
+1. First, configure MX records for your domain or subdomain so that Mailgun is
+   the system used to receive emails. Follow [Mailgun's directions here][mailgun-mx]
+   to configure DNS correctly. As noted, take care not to remove any existing
+   MX records (e.g. for Google Mail). We recommend using a custom subdomain
+   just for this Cog, e.g. `crank-tests.example.com`.
+2. Once configured, set up a Route in your Mailgun dashboard (under [Receiving][mailgun-app-routes])
+   with a custom expression type with the following value:
+   `match_recipient(".*@crank-tests\.example\.com")`, where you replace
+   `crank-tests.example.com` with the domain you configured above.
+3. When creating the custom Route, check the `Store and notify` box, to ensure
+   Mailgun stores all messages matching the route. You do not need to specify a
+   notification URL.
+4. Give the Route a useful description, e.g. `Captures Crank emails for testing`.
+
+You can verify that everything was configured correctly by sending an email to
+`cog-setup-test@crank-tests.example.com` (again, using the domain from above)
+from your personal email address, and looking for a corresponding `stored` log
+message in your Mailgun dashboard under `Sending -> Logs`.
+
+Finally, return to your CLI to authenticate the Cog:
+
+```shell-session
+$ crank cog:auth automatoninc/inbox-mailgun
+```
+
+For details on where to find authentication information, see the Authentication
+section below.
 
 ## Usage
 
 ### Authentication
+
 <!-- run `crank cog:readme automatoninc/inbox-mailgun` to update -->
 <!-- authenticationDetails -->
+
+Note:
+- Your `Mailgun API Key` can be found on the [API security page][mailgun-api-key],
+- Your `Email Domain` is the domain or subdomain configured for use with
+  Mailgun (e.g. `crank-tests.example.com`),
+- Your `Mailgun API Endpoint` will most likely be `https://api.mailgun.net/v3`,
+  unless you're using Mailgun's EU data center, in which case it will be
+  `https://api.eu.mailgun.net/v3`.
 
 ### Steps
 Once installed, the following steps will be available for use in any of your
@@ -79,3 +134,7 @@ Tests can be found in the `test` directory and run like this: `npm test`.
 Ensure your code meets standards by running `npm run lint`.
 
 [what-is-crank]: https://crank.run?utm_medium=readme&utm_source=automatoninc%2Finbox-mailgun
+[sign-up-for-mailgun]: https://signup.mailgun.com/new/signup?utm_source=automaton
+[mailgun-mx]: https://documentation.mailgun.com/en/latest/quickstart-receiving.html#how-to-start-receiving-inbound-email
+[mailgun-app-routes]: https://app.mailgun.com/app/receiving/routes
+[mailgun-api-key]: https://app.mailgun.com/app/account/security/api_keys
