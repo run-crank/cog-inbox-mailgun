@@ -48,7 +48,7 @@ describe('EmailCountEqualsStep', () => {
     it('should return expected step metadata', () => {
       const def: StepDefinition = stepUnderTest.getDefinition();
       expect(def.getStepId()).to.equal('EmailCountEqualsStep');
-      expect(def.getName()).to.equal('Check the email count on a Mailgun Inbox');
+      expect(def.getName()).to.equal('Check the number of emails received');
       expect(def.getExpression()).to.equal('there should be (?<count>\\d+) emails in mailgun for (?<email>.+)');
       expect(def.getType()).to.equal(StepDefinition.Type.VALIDATION);
     });
