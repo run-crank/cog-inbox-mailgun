@@ -7,7 +7,7 @@ import { Email, Inbox } from '../models';
 export class EmailFieldValidationStep extends BaseStep implements StepInterface {
   private operators: string[] = ['should contain', 'should not contain', 'should be'];
 
-  protected stepName: string = 'Check a field on a Mailgun Email';
+  protected stepName: string = 'Check the content of an email';
   // tslint:disable-next-line:max-line-length
   protected stepExpression: string = 'the (?<field>(subject|body-html|body-plain|from)) of the (?<position>\\d+)(?:(st|nd|rd|th))? mailgun email for (?<email>.+) (?<operator>(should contain|should not contain|should be)) (?<expectation>.+)';
   protected stepType: StepDefinition.Type = StepDefinition.Type.VALIDATION;
@@ -16,21 +16,21 @@ export class EmailFieldValidationStep extends BaseStep implements StepInterface 
     type: FieldDefinition.Type.EMAIL,
     description: 'The inbox\'s email address',
   }, {
-    field: 'field',
-    type: FieldDefinition.Type.STRING,
-    description: 'Field name to check',
-  }, {
-    field: 'expectation',
-    type: FieldDefinition.Type.ANYSCALAR,
-    description: 'Expected field value',
-  }, {
     field: 'position',
     type: FieldDefinition.Type.NUMERIC,
     description: 'The nth message to check from the email\'s inbox',
   }, {
+    field: 'field',
+    type: FieldDefinition.Type.STRING,
+    description: 'Field name to check',
+  }, {
     field: 'operator',
     type: FieldDefinition.Type.STRING,
     description: 'The operator to use when performing the validation. Current supported values are: should contain, should not contain, and should be',
+  }, {
+    field: 'expectation',
+    type: FieldDefinition.Type.ANYSCALAR,
+    description: 'Expected field value',
   }];
 
   async executeStep(step: Step) {
