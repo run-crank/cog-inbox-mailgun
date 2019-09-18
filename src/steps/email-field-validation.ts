@@ -37,7 +37,7 @@ export class EmailFieldValidationStep extends BaseStep implements StepInterface 
     const stepData: any = step.getData() ? step.getData().toJavaScript() : {};
     const expectation = stepData.expectation;
     const field = stepData.field;
-    const position = stepData.position || 1;
+    const position = parseInt(stepData.position, 2) || 1;
     const operator = stepData.operator;
 
     try {
@@ -63,6 +63,7 @@ export class EmailFieldValidationStep extends BaseStep implements StepInterface 
         return this.error(inbox['message']);
       }
 
+      console.log('Position', position, position - 1);
       if (!inbox.items[position - 1]) {
         return this.error('Cannot fetch email in position: %s', [
           position,
