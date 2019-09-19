@@ -37,7 +37,8 @@ export class EmailFieldValidationStep extends BaseStep implements StepInterface 
     const stepData: any = step.getData() ? step.getData().toJavaScript() : {};
     const expectation = stepData.expectation;
     const field = stepData.field;
-    const position = stepData.position || 1;
+    // tslint:disable-next-line:radix
+    const position = parseInt(stepData.position) || 1;
     const operator = stepData.operator;
 
     try {
