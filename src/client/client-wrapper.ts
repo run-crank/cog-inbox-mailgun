@@ -1,5 +1,6 @@
 import * as grpc from 'grpc';
 import * as https from 'https';
+import * as RequestPromise from 'request-promise';
 import { Field } from '../core/base-step';
 import { FieldDefinition } from '../proto/cog_pb';
 import { Inbox, Email } from '../models';
@@ -26,9 +27,11 @@ export class ClientWrapper {
   private auth: grpc.Metadata;
   private basicAuth: string;
   private client: any;
+  private request: RequestPromise.RequestPromiseAPI;
 
-  constructor(auth: grpc.Metadata, clientConstructor = https) {
+  constructor(auth: grpc.Metadata, clientConstructor = https, request = RequestPromise) {
     this.auth = auth;
+    this.request = request;
     const creds: string = `api:${this.auth.get('apiKey').toString()}`;
     this.basicAuth = `Basic ${Buffer.from(creds).toString('base64')}`;
     this.client = clientConstructor;
@@ -86,5 +89,15 @@ export class ClientWrapper {
     });
 
     return result;
+  }
+
+  public async evaluateUrls(urls: string[]) {
+    console.table(urls);
+    const promises = [];
+    urls.forEach((url) => {
+      promises.push(this.request.get(url));
+    });
+
+    return Promise.all(promises);
   }
 }
