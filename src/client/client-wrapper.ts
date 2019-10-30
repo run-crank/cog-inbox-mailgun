@@ -92,7 +92,6 @@ export class ClientWrapper {
   }
 
   public async evaluateUrls(urls: string[]) {
-    console.table(urls);
     const promises = [];
     urls.forEach((url) => {
       promises.push(this.request.get(url));
