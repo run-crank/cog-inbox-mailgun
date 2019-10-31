@@ -5,6 +5,8 @@ import { Field } from '../core/base-step';
 import { FieldDefinition } from '../proto/cog_pb';
 import { Inbox, Email } from '../models';
 
+import { Promise as Bluebird } from 'bluebird';
+
 export class ClientWrapper {
   public static expectedAuthFields: Field[] = [{
     field: 'apiKey',
@@ -92,11 +94,20 @@ export class ClientWrapper {
   }
 
   public async evaluateUrls(urls: string[]) {
-    const promises = [];
-    urls.forEach((url) => {
-      promises.push(this.request.get(url));
-    });
+    const brokenUrls = [];
 
-    return Promise.all(promises);
+    return new Promise((resolve) => {
+      Bluebird.each(urls, (url) => {
+        return this.request.get(url).then((res) => {
+        }).catch(() => {
+          brokenUrls.push(url);
+        });
+      }).then(() => {
+        resolve(brokenUrls);
+      }).catch(() => {
+        resolve(brokenUrls);
+      });
+
+    });
   }
 }

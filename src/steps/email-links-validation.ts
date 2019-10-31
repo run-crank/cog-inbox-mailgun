@@ -73,14 +73,24 @@ export class EmailLinksValidationStep extends BaseStep implements StepInterface 
                       .map(f => f.getAttribute('href'))
                       .filter(f => f.includes('http'));
 
-      await this.client.evaluateUrls(urls);
+      const brokenUrls = await this.client.evaluateUrls(urls);
+
+      if (brokenUrls.length > 0) {
+        return this.fail('Broken links found in the email. URLs include: %s', [
+          brokenUrls.join(', '),
+        ]);
+      }
 
       return this.pass('No broken links were found for email %s in position %s', [
         stepData.email,
         position,
       ]);
     } catch (e) {
-      return this.error('Broken links found: %s', [e.toString()]);
+      return this.error('There was a problem checking links in email number %d for email %s: %s', [
+        stepData.position,
+        stepData.email,
+        e.toString(),
+      ]);
     }
   }
 }

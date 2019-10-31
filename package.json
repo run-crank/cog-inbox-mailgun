@@ -38,6 +38,7 @@
     "node": ">= 10.0.0"
   },
   "devDependencies": {
+    "@types/bluebird": "^3.5.28",
     "@types/chai": "^4.1.7",
     "@types/google-protobuf": "^3.2.7",
     "@types/mocha": "^5.2.7",
@@ -56,6 +57,7 @@
     "typescript": "^3.5.1"
   },
   "dependencies": {
+    "bluebird": "^3.7.1",
     "dom-parser": "^0.1.6",
     "google-protobuf": "^3.8.0",
     "grpc": "^1.21.1",
