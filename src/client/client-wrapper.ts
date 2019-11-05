@@ -1,8 +1,11 @@
 import * as grpc from 'grpc';
 import * as https from 'https';
+import * as RequestPromise from 'request-promise';
 import { Field } from '../core/base-step';
 import { FieldDefinition } from '../proto/cog_pb';
 import { Inbox, Email } from '../models';
+
+import { Promise as Bluebird } from 'bluebird';
 
 export class ClientWrapper {
   public static expectedAuthFields: Field[] = [{
@@ -26,9 +29,11 @@ export class ClientWrapper {
   private auth: grpc.Metadata;
   private basicAuth: string;
   private client: any;
+  private request: RequestPromise.RequestPromiseAPI;
 
-  constructor(auth: grpc.Metadata, clientConstructor = https) {
+  constructor(auth: grpc.Metadata, clientConstructor = https, request = RequestPromise) {
     this.auth = auth;
+    this.request = request;
     const creds: string = `api:${this.auth.get('apiKey').toString()}`;
     this.basicAuth = `Basic ${Buffer.from(creds).toString('base64')}`;
     this.client = clientConstructor;
@@ -86,5 +91,23 @@ export class ClientWrapper {
     });
 
     return result;
+  }
+
+  public async evaluateUrls(urls: string[]) {
+    const brokenUrls = [];
+
+    return new Promise((resolve) => {
+      Bluebird.each(urls, (url) => {
+        return this.request.get(url).then((res) => {
+        }).catch(() => {
+          brokenUrls.push(url);
+        });
+      }).then(() => {
+        resolve(brokenUrls);
+      }).catch(() => {
+        resolve(brokenUrls);
+      });
+
+    });
   }
 }
