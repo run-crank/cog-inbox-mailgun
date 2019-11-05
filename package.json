@@ -59,6 +59,7 @@
   "dependencies": {
     "bluebird": "^3.7.1",
     "dom-parser": "^0.1.6",
+    "get-urls": "^9.2.0",
     "google-protobuf": "^3.8.0",
     "grpc": "^1.21.1",
     "https": "^1.0.0",

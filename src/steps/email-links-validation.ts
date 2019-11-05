@@ -3,7 +3,7 @@ import { FieldDefinition, Step, StepDefinition } from '../proto/cog_pb';
 import { Inbox } from '../models';
 
 import * as DomParser from 'dom-parser';
-import * as RequestPromise from 'request-promise';
+import * as GetUrls from 'get-urls';
 
 /*tslint:disable:no-else-after-return*/
 export class EmailLinksValidationStep extends BaseStep implements StepInterface {
@@ -64,16 +64,21 @@ export class EmailLinksValidationStep extends BaseStep implements StepInterface 
         ]);
       }
 
-      const htmlBody = email['body-html'];
-      const plain = email['body-plain'];
+      const htmlBody: string = email['body-html'];
+      const plain: string = email['body-plain'];
 
       const parser = new DomParser();
       const dom = parser.parseFromString(htmlBody);
-      const urls = dom.getElementsByTagName('a')
+
+      const htmlUrls = dom.getElementsByTagName('a')
                       .map(f => f.getAttribute('href'))
                       .filter(f => f.includes('http'));
+      const plainUrls = Array.from(GetUrls(plain).values());
 
-      const brokenUrls = await this.client.evaluateUrls(urls);
+      const urls = new Set(htmlUrls.concat(plainUrls));
+
+      const brokenUrls = await this.client.evaluateUrls(
+        this.sanitizeUrl(Array.from(urls.values())));
 
       if (brokenUrls.length > 0) {
         return this.fail('Broken links found in the email. URLs include: %s', [
@@ -92,6 +97,14 @@ export class EmailLinksValidationStep extends BaseStep implements StepInterface 
         e.toString(),
       ]);
     }
+  }
+
+  private sanitizeUrl(urls): string[] {
+    if (!urls) {
+      return;
+    }
+
+    return urls.filter(f => !f.includes('%3E'));
   }
 }
 
