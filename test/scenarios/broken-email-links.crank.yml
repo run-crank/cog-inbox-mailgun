@@ -3,4 +3,3 @@ description: Check if an email has broken links
 
 steps:
 - step: the 1st mailgun email for 12b4f482-34c2-4c5c-bf77-afc6d3ee19e3@thisisjust.atomatest.com should not contain broken links
-
