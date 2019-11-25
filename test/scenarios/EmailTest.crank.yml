@@ -18,4 +18,3 @@ steps:
   step: Validate that the from of the 1st mailgun email for {{test.email}} should not contain gjkgfljg
 - step: Validate that the subject of the 1st mailgun email for {{test.email}} should contain Pontezas
 - step: Validate that the body-plain of the 1st mailgun email for {{test.email}} should contain Hogwart
- 
