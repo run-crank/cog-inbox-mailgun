@@ -77,12 +77,12 @@ export class EmailLinksValidationStep extends BaseStep implements StepInterface 
 
       const urls = new Set(htmlUrls.concat(plainUrls));
 
-      const brokenUrls = await this.client.evaluateUrls(
+      const response = await this.client.evaluateUrls(
         this.sanitizeUrl(Array.from(urls.values())));
 
-      if (brokenUrls.length > 0) {
+      if (response.length > 0) {
         return this.fail('Broken links found in the email. URLs include: %s', [
-          brokenUrls.join(', '),
+          response.map(f => `${f.url} (${f.message})`).join(', '),
         ]);
       }
 
