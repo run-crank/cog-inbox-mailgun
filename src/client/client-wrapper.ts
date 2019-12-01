@@ -91,15 +91,16 @@ export class ClientWrapper {
     return result;
   }
 
-  public async evaluateUrls(urls: string[]) {
+  public async evaluateUrls(urls) {
     const brokenUrls = [];
 
     await Promise.all(urls.map((url) => {
       return new Promise((resolve) => {
-        this.request.get(url).then(resolve).catch((err) => {
+        this.request.get(url.url).then(resolve).catch((err) => {
           brokenUrls.push({
-            url,
+            url: url.url,
             message: err.statusCode ? `Status code: ${err.statusCode}` : 'No response received',
+            type: url.type,
           });
           resolve();
         });

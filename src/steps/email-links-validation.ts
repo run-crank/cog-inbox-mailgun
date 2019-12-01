@@ -71,9 +71,10 @@ export class EmailLinksValidationStep extends BaseStep implements StepInterface 
       const dom = parser.parseFromString(htmlBody);
 
       const htmlUrls = dom.getElementsByTagName('a')
-                      .map(f => f.getAttribute('href'))
-                      .filter(f => f.includes('http'));
-      const plainUrls = Array.from(GetUrls(plain).values());
+                      .map((f) => { return { url: f.getAttribute('href'), type: 'HTML' }; })
+                      .filter(f => f.url.includes('http'));
+
+      const plainUrls = Array.from(GetUrls(plain).values()).map((f) => { return { url: f, type: 'Plain' }; });
 
       const urls = new Set(htmlUrls.concat(plainUrls));
 
@@ -82,7 +83,7 @@ export class EmailLinksValidationStep extends BaseStep implements StepInterface 
 
       if (response.length > 0) {
         return this.fail('Broken links found in the email. URLs include: %s', [
-          response.map(f => `${f.url} (${f.message})`).join(', '),
+          response.map(f => `${f.url} (${f.message}) (Type: ${f.type})`).join(', '),
         ]);
       }
 
@@ -104,7 +105,7 @@ export class EmailLinksValidationStep extends BaseStep implements StepInterface 
       return;
     }
 
-    return urls.filter(f => !f.includes('%3E'));
+    return urls.filter(f => !f.url.includes('%3E'));
   }
 }
 
