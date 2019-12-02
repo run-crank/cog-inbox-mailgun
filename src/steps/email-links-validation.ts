@@ -4,6 +4,7 @@ import { Inbox } from '../models';
 
 import * as DomParser from 'dom-parser';
 import * as GetUrls from 'get-urls';
+import * as os from 'os';
 
 /*tslint:disable:no-else-after-return*/
 export class EmailLinksValidationStep extends BaseStep implements StepInterface {
@@ -82,8 +83,14 @@ export class EmailLinksValidationStep extends BaseStep implements StepInterface 
         this.sanitizeUrl(Array.from(urls.values())));
 
       if (response.length > 0) {
-        return this.fail('Broken links found in the email. URLs include: %s', [
-          response.map(f => `${f.url} (${f.message}) (Type: ${f.type})`).join(', '),
+        const plain = response.filter(f => f.type === 'Plain');
+        const html = response.filter(f => f.type === 'HTML');
+        return this.fail('Broken links found in the email. URLs include: %s %s %s %s %s', [
+          os.EOL,
+          `Plain: ${os.EOL}`,
+          plain.length > 0 ? plain.map(f => `${f.url} (${f.message})`).join(`${os.EOL}`) : `No URLs found in Plain Body ${os.EOL}`,
+          `HTML: ${os.EOL}`,
+          html.length > 0 ? html.map(f => `${f.url} (${f.message})`).join(`${os.EOL}`) : `No URLS found in HTML Body ${os.EOL}`,
         ]);
       }
 
