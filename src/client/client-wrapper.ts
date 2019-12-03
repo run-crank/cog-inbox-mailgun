@@ -98,7 +98,7 @@ export class ClientWrapper {
       return new Promise((resolve) => {
         this.request.get(url.url).then(resolve).catch((err) => {
           brokenUrls.push({
-            url: url.url,
+            url: err.request ? err.request.uri.href : url.url,
             message: err.statusCode ? `Status code: ${err.statusCode}` : 'No response received',
             type: url.type,
           });
