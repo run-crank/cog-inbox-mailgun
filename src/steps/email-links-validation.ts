@@ -4,6 +4,9 @@ import { Inbox } from '../models';
 
 import * as DomParser from 'dom-parser';
 import * as GetUrls from 'get-urls';
+import * as os from 'os';
+
+const nl = os.EOL;
 
 /*tslint:disable:no-else-after-return*/
 export class EmailLinksValidationStep extends BaseStep implements StepInterface {
@@ -71,18 +74,25 @@ export class EmailLinksValidationStep extends BaseStep implements StepInterface 
       const dom = parser.parseFromString(htmlBody);
 
       const htmlUrls = dom.getElementsByTagName('a')
-                      .map(f => f.getAttribute('href'))
-                      .filter(f => f.includes('http'));
-      const plainUrls = Array.from(GetUrls(plain).values());
+                      .map((f) => { return { url: f.getAttribute('href'), type: 'HTML' }; })
+                      .filter(f => f.url.includes('http'));
+
+      const plainUrls = Array.from(GetUrls(plain).values()).map((f) => { return { url: f, type: 'Plain' }; });
 
       const urls = new Set(htmlUrls.concat(plainUrls));
 
-      const brokenUrls = await this.client.evaluateUrls(
+      const response = await this.client.evaluateUrls(
         this.sanitizeUrl(Array.from(urls.values())));
 
-      if (brokenUrls.length > 0) {
-        return this.fail('Broken links found in the email. URLs include: %s', [
-          brokenUrls.join(', '),
+      if (response.length > 0) {
+        const plain = response.filter(f => f.type === 'Plain');
+        const html = response.filter(f => f.type === 'HTML');
+        return this.fail('Broken links found in the email. URLs include: %s%s%s%s%s', [
+          `${nl}`,
+          `${nl}Plain: ${nl}`,
+          plain.length > 0 ? plain.map(f => `${f.url} (${f.message})`.trim()).join(`${nl}`) : `No URLs found in Plain Body${nl}`,
+          `${nl}${nl}HTML: ${nl}`,
+          html.length > 0 ? html.map(f => `${f.url} (${f.message})`.trim()).join(`${nl}`) : `No URLS found in HTML Body${nl}`,
         ]);
       }
 
@@ -104,7 +114,7 @@ export class EmailLinksValidationStep extends BaseStep implements StepInterface 
       return;
     }
 
-    return urls.filter(f => !f.includes('%3E'));
+    return urls.filter(f => !f.url.includes('%3E'));
   }
 }
 
