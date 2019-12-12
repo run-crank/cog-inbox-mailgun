@@ -34,7 +34,7 @@ export class EmailLinksValidationStep extends BaseStep implements StepInterface 
       const position: number = stepData.position;
 
       if (domain !== authDomain) {
-        return this.error('Can\'t check inbox for %s: email domain doesn\'t match %s', [
+        return this.error("Couldn't check %s's email: Only addresses with the %s domain can be checked.", [
           stepData.email,
           authDomain,
         ]);
@@ -43,18 +43,22 @@ export class EmailLinksValidationStep extends BaseStep implements StepInterface 
       const inbox: Inbox = await this.client.getInbox(stepData.email);
 
       if (!inbox || inbox === null) {
-        return this.error('Cannot fetch inbox for: %s', [
+        return this.error("There was a problem checking %s's email: no inbox found.", [
           stepData.email,
         ]);
       }
 
       if (inbox['message']) {
-        return this.error(inbox['message']);
+        return this.error("There was a problem checking %s's email: %s", [
+          stepData.email,
+          inbox['message'],
+        ]);
       }
 
       if (!inbox.items[position - 1]) {
-        return this.error('Cannot fetch email in position: %s', [
+        return this.error("Email #%d hasn't been received yet: there are %d message(s) in the inbox.", [
           position,
+          inbox.items.length,
         ]);
       }
 
@@ -62,7 +66,7 @@ export class EmailLinksValidationStep extends BaseStep implements StepInterface 
       const email: Record<string, any> = await this.client.getEmailByStorageUrl(storageUrl);
 
       if (email === null || !email) {
-        return this.error('Cannot fetch email in position: %s', [
+        return this.error("There was a problem reading email #%d: email found but couldn't be read from storage.", [
           position,
         ]);
       }
@@ -87,21 +91,21 @@ export class EmailLinksValidationStep extends BaseStep implements StepInterface 
       if (response.length > 0) {
         const plain = response.filter(f => f.type === 'Plain');
         const html = response.filter(f => f.type === 'HTML');
-        return this.fail('Broken links found in the email. URLs include: %s%s%s%s%s', [
+        return this.fail('Broken links were found in the email. URLs include: %s%s%s%s%s', [
           `${nl}`,
-          `${nl}Plain: ${nl}`,
-          plain.length > 0 ? plain.map(f => `${f.url} (${f.message})`.trim()).join(`${nl}`) : `No URLs found in Plain Body${nl}`,
+          `${nl}Plain Text: ${nl}`,
+          plain.length > 0 ? plain.map(f => `${f.url} (${f.message})`.trim()).join(`${nl}`) : `No URLs found in Plain Text Body${nl}`,
           `${nl}${nl}HTML: ${nl}`,
           html.length > 0 ? html.map(f => `${f.url} (${f.message})`.trim()).join(`${nl}`) : `No URLS found in HTML Body${nl}`,
         ]);
       }
 
-      return this.pass('No broken links were found for email %s in position %s', [
-        stepData.email,
+      return this.pass("No broken links were found in email #%d in %s's inbox", [
         position,
+        stepData.email,
       ]);
     } catch (e) {
-      return this.error('There was a problem checking links in email number %d for email %s: %s', [
+      return this.error("There was a problem checking links in email #%d in %s's inbox: %s", [
         stepData.position,
         stepData.email,
         e.toString(),

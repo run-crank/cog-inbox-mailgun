@@ -28,7 +28,7 @@ export class EmailCountEqualsStep extends BaseStep implements StepInterface {
       const authDomain: string = this.client.auth.get('domain').toString();
 
       if (domain !== authDomain) {
-        return this.error('Can\'t check inbox for %s: email domain doesn\'t match %s', [
+        return this.error("Couldn't check %s's email: Only addresses with the %s domain can be checked.", [
           stepData.email,
           authDomain,
         ]);
@@ -37,29 +37,32 @@ export class EmailCountEqualsStep extends BaseStep implements StepInterface {
       const inbox: Inbox = await this.client.getInbox(stepData.email);
 
       if (!inbox || inbox === null) {
-        return this.error('Cannot fetch inbox for: %s', [
+        return this.error("There was a problem checking %s's email: no inbox found.", [
           stepData.email,
         ]);
       }
 
       if (inbox['message']) {
-        return this.error(inbox['message']);
+        return this.error("There was a problem checking %s's email: %s", [
+          stepData.email,
+          inbox['message'],
+        ]);
       }
 
       // tslint:disable-next-line:triple-equals
-      if (inbox.items.length == 0) {
-        return this.fail('Expected there to be %s emails, but no emails have been received', [
+      if (inbox.items.length == 0 && stepData.count != 0) {
+        return this.fail('Expected there to be %d emails, but no emails have been received', [
           stepData.count,
         ]);
       }
 
       // tslint:disable-next-line:triple-equals
       if (inbox.items.length == stepData.count) {
-        return this.pass('Found %s emails, as expected', [
+        return this.pass('Found %d emails, as expected', [
           inbox.items.length,
         ]);
       } else {
-        return this.fail('Expected there to be %s emails, but there were actually %s. Their subjects are: %s', [
+        return this.fail('Expected there to be %d emails, but there were actually %d. Their subjects are:\n\n%s', [
           stepData.count,
           inbox.items.length,
           inbox.items.map(f => f['message']['headers']['subject']).join(EOL),
@@ -67,7 +70,7 @@ export class EmailCountEqualsStep extends BaseStep implements StepInterface {
       }
 
     } catch (e) {
-      return this.error('There was an error retrieving email messages: %s', [e.toString()]);
+      return this.error('There was a problem checking emails: %s', [e.toString()]);
     }
   }
 }

@@ -46,7 +46,7 @@ export class EmailFieldValidationStep extends BaseStep implements StepInterface 
       const authDomain: string = this.client.auth.get('domain').toString();
 
       if (domain !== authDomain) {
-        return this.error('Can\'t check inbox for %s: email domain doesn\'t match %s', [
+        return this.error("Couldn't check %s's email: Only addresses with the %s domain can be checked.", [
           stepData.email,
           authDomain,
         ]);
@@ -55,18 +55,22 @@ export class EmailFieldValidationStep extends BaseStep implements StepInterface 
       const inbox: Inbox = await this.client.getInbox(stepData.email);
 
       if (!inbox || inbox === null) {
-        return this.error('Cannot fetch inbox for: %s', [
+        return this.error("There was a problem checking %s's email: no inbox found.", [
           stepData.email,
         ]);
       }
 
       if (inbox['message']) {
-        return this.error(inbox['message']);
+        return this.error("There was a problem checking %s's email: %s", [
+          stepData.email,
+          inbox['message'],
+        ]);
       }
 
       if (!inbox.items[position - 1]) {
-        return this.error('Cannot fetch email in position: %s', [
+        return this.error("Email #%d hasn't been received yet: there are %d message(s) in the inbox.", [
           position,
+          inbox.items.length,
         ]);
       }
 
@@ -74,7 +78,7 @@ export class EmailFieldValidationStep extends BaseStep implements StepInterface 
       const email: Email = await this.client.getEmailByStorageUrl(storageUrl);
 
       if (email === null || !email) {
-        return this.error('Cannot fetch email in position: %s', [
+        return this.error("There was a problem reading email #%d: email found but couldn't be read from storage.", [
           position,
         ]);
       }
@@ -96,7 +100,7 @@ export class EmailFieldValidationStep extends BaseStep implements StepInterface 
         ]);
       }
     } catch (e) {
-      return this.error('There was an error retrieving email messages: %s', [e.toString()]);
+      return this.error('There was a problem checking email messages: %s', [e.toString()]);
     }
   }
 
