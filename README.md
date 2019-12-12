@@ -72,11 +72,13 @@ section below.
 
 <!-- run `crank cog:readme automatoninc/inbox-mailgun` to update -->
 <!-- authenticationDetails -->
-You will be asked for the following authentication details on installation.
+You will be asked for the following authentication details on installation. To avoid prompts in a CI/CD context, you can provide the same details as environment variables.
 
-- **apiKey**: Mailgun API Key
-- **domain**: Email Domain
-- **endpoint**: Mailgun API Endpoint
+| Field | Install-Time Environment Variable | Description |
+| --- | --- | --- |
+| **apiKey** | `CRANK_AUTOMATONINC_INBOX_MAILGUN__APIKEY` | Mailgun API Key |
+| **domain** | `CRANK_AUTOMATONINC_INBOX_MAILGUN__DOMAIN` | Email Domain |
+| **endpoint** | `CRANK_AUTOMATONINC_INBOX_MAILGUN__ENDPOINT` | Mailgun API Endpoint |
 
 ```shell-session
 # Re-authenticate by running this
@@ -98,24 +100,11 @@ Scenario files.
 
 <!-- run `crank cog:readme automatoninc/inbox-mailgun` to update -->
 <!-- stepDetails -->
-<h4 id="EmailCountEqualsStep">Check the number of emails received</h4>
-
-- **Expression**: `there should be (?<count>\d+) emails in mailgun for (?<email>.+)`
-- **Expected Data**:
-  - `email`: The inbox's email address
-  - `count`: The number received
-- **Step ID**: `EmailCountEqualsStep`
-
-<h4 id="EmailFieldValidationStep">Check the content of an email</h4>
-
-- **Expression**: `the (?<field>(subject|body-html|body-plain|from)) of the (?<position>\d+)(?:(st|nd|rd|th))? mailgun email for (?<email>.+) (?<operator>(should contain|should not contain|should be)) (?<expectation>.+)`
-- **Expected Data**:
-  - `email`: The inbox's email address
-  - `position`: The nth message to check from the email's inbox
-  - `field`: Field name to check
-  - `operator`: The operator to use when performing the validation. Current supported values are: should contain, should not contain, and should be
-  - `expectation`: Expected field value
-- **Step ID**: `EmailFieldValidationStep`
+| Name (ID) | Expression | Expected Data |
+| --- | --- | --- |
+| **Check the number of emails received**<br>(`EmailCountEqualsStep`) | `there should be (?<count>\d+) emails in mailgun for (?<email>.+)` | - `email`: The inbox's email address <br><br>- `count`: The number received |
+| **Check the content of an email**<br>(`EmailFieldValidationStep`) | `the (?<field>(subject|body-html|body-plain|from)) of the (?<position>\d+)(?:(st|nd|rd|th))? mailgun email for (?<email>.+) (?<operator>(should contain|should not contain|should be)) (?<expectation>.+)` | - `email`: The inbox's email address <br><br>- `position`: The nth message to check from the email's inbox <br><br>- `field`: Field name to check <br><br>- `operator`: The operator to use when performing the validation. Current supported values are: should contain, should not contain, and should be <br><br>- `expectation`: Expected field value |
+| **Check that no link in an email is broken**<br>(`EmailLinksValidationStep`) | `the (?<position>\d+)(?:(st|nd|rd|th))? mailgun email for (?<email>.+) should not contain broken links` | - `email`: The inbox's email address <br><br>- `position`: The nth message to check from the email's inbox |
 <!-- stepDetailsEnd -->
 
 ## Development and Contributing
