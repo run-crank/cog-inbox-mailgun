@@ -71,8 +71,8 @@ export class EmailLinksValidationStep extends BaseStep implements StepInterface 
         ]);
       }
 
-      const htmlBody: string = email['body-html'];
-      const plain: string = email['body-plain'];
+      const htmlBody: string = email['body-html'] || '';
+      const plain: string = email['body-plain'] || '';
 
       const parser = new DomParser();
       const dom = parser.parseFromString(htmlBody);
