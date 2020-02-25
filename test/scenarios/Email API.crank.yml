@@ -5,4 +5,5 @@ description: >
   This just tests API inbox requests
   
 steps:
-- step: Validate that there should be 2 emails in mailgun for 50bac587-4c1d-46b5-8dd6-f396a0d64125@thisisjust.atomatest.com
+- step: Validate that there should be 1 emails in mailgun for 50bac587-4c1d-46b5-8dd6-f396a0d64125@thisisjust.atomatest.com
+- step: Validate that the subject of the 1st mailgun email for 50bac587-4c1d-46b5-8dd6-f396a0d64125@thisisjust.atomatest.com should be 25-Feb Test

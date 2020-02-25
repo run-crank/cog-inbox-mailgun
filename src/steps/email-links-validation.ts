@@ -55,11 +55,20 @@ export class EmailLinksValidationStep extends BaseStep implements StepInterface 
         ]);
       }
 
+      let messageRecords;
+
       if (!inbox.items[position - 1]) {
         return this.error("Email #%d hasn't been received yet: there are %d message(s) in the inbox.", [
           position,
           inbox.items.length,
         ]);
+      }
+
+      if (inbox.items.length > 1) {
+        messageRecords = this.createMessageRecords(inbox.items);
+      } else {
+        // messageRecords = this.binary('', '', 'text/eml', '');
+        messageRecords = this.createMessageRecords(inbox.items);
       }
 
       const storageUrl: string = inbox.items.reverse()[position - 1].storage.url;
@@ -84,32 +93,38 @@ export class EmailLinksValidationStep extends BaseStep implements StepInterface 
       const plainUrls = Array.from(GetUrls(plain).values()).map((f) => { return { url: f, type: 'Plain' }; });
 
       const urls = new Set(htmlUrls.concat(plainUrls));
+      const sanitizedUrls = this.sanitizeUrl(Array.from(urls.values()));
 
       const response = await this.client.evaluateUrls(
-        this.sanitizeUrl(Array.from(urls.values())));
+        sanitizedUrls,
+      );
 
-      if (response.length > 0) {
-        const plain = response.filter(f => f.type === 'Plain');
-        const html = response.filter(f => f.type === 'HTML');
+      const brokenUrls = response.brokenUrls;
+      const allUrls = response.brokenUrls.concat(response.workingUrls);
+      const linkRecords = this.createLinkRecords(allUrls);
+
+      if (brokenUrls.length > 0) {
+        const plain = brokenUrls.filter(f => f.type === 'Plain');
+        const html = brokenUrls.filter(f => f.type === 'HTML');
         return this.fail('Broken links were found in the email. URLs include: %s%s%s%s%s', [
           `${nl}`,
           `${nl}Plain Text: ${nl}`,
           plain.length > 0 ? plain.map(f => `${f.url} (${f.message})`.trim()).join(`${nl}`) : `No URLs found in Plain Text Body${nl}`,
           `${nl}${nl}HTML: ${nl}`,
           html.length > 0 ? html.map(f => `${f.url} (${f.message})`.trim()).join(`${nl}`) : `No URLS found in HTML Body${nl}`,
-        ]);
+        ], [messageRecords, linkRecords]);
       }
 
-      return this.pass("No broken links were found in email #%d in %s's inbox", [
-        position,
-        stepData.email,
-      ]);
+      return this.pass(
+        'No broken links were found in email #%d in %s\'s inbox',
+        [position, stepData.email],
+        [messageRecords, linkRecords],
+      );
     } catch (e) {
-      return this.error("There was a problem checking links in email #%d in %s's inbox: %s", [
-        stepData.position,
-        stepData.email,
-        e.toString(),
-      ]);
+      return this.error(
+        'There was a problem checking links in email #%d in %s\'s inbox: %s',
+        [stepData.position, stepData.email, e.toString()],
+      );
     }
   }
 
@@ -119,6 +134,39 @@ export class EmailLinksValidationStep extends BaseStep implements StepInterface 
     }
 
     return urls.filter(f => !f.url.includes('%3E'));
+  }
+
+  createMessageRecords(emails: Record<string, any>[]) {
+    const records = [];
+    emails.forEach((email, i) => {
+      records.push({
+        '#': i + 1,
+        Subject: email.message.headers.subject,
+        From: email.message.headers.from,
+        To: email.message.headers.to,
+      });
+    });
+
+    const headers = {
+      '#': '#',
+      Subject: 'Subject',
+      From: 'From',
+      To: 'To',
+    };
+    return this.table('messages', 'Received Email Messages', headers, records);
+  }
+
+  createLinkRecords(urls: Record<string, any>[]) {
+    const records = urls.map((url) => {
+      return {
+        Type: url.type,
+        Url: url.url,
+        StatusCode: url.statusCode,
+      };
+    });
+
+    const headers = { Type: 'Type', Url: 'URL', StatusCode: 'StatusCode' };
+    return this.table('links', 'Found Links', headers, records);
   }
 }
 
