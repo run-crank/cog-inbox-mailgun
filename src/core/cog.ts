@@ -4,34 +4,37 @@ import * as fs from 'fs';
 
 import { Field, StepInterface } from './base-step';
 
-import { ClientWrapper } from '../client/client-wrapper';
 import { ICogServiceServer } from '../proto/cog_grpc_pb';
 import { ManifestRequest, CogManifest, Step, RunStepRequest, RunStepResponse, FieldDefinition,
   StepDefinition } from '../proto/cog_pb';
+import { ClientWrapper } from '../client/client-wrapper';
 
 export class Cog implements ICogServiceServer {
 
   private steps: StepInterface[];
 
   constructor (private clientWrapperClass, private stepMap: Record<string, any> = {}) {
-    // Dynamically reads the contents of the ./steps folder for step definitions and makes the
-    // corresponding step classes available on this.steps and this.stepMap.
-    this.steps = fs.readdirSync(`${__dirname}/../steps`, { withFileTypes: true })
-      .filter((file: fs.Dirent) => {
-        return file.isFile() && (file.name.endsWith('.ts') || file.name.endsWith('.js'));
-      }).map((file: fs.Dirent) => {
-        const step = require(`${__dirname}/../steps/${file.name}`).Step;
+    this.steps = [].concat(...Object.values(this.getSteps(`${__dirname}/../steps`, clientWrapperClass)));
+  }
+
+  private getSteps(dir: string, clientWrapperClass) {
+    const steps = fs.readdirSync(dir, { withFileTypes: true })
+    .map((file: fs.Dirent) => {
+      if (file.isFile() && (file.name.endsWith('.ts') || file.name.endsWith('.js'))) {
+        const step = require(`${dir}/${file.name}`).Step;
         const stepInstance: StepInterface = new step(clientWrapperClass);
         this.stepMap[stepInstance.getId()] = step;
         return stepInstance;
-      });
+      } if (file.isDirectory()) {
+        return this.getSteps(`${__dirname}/../steps/${file.name}`, clientWrapperClass);
+      }
+    });
+
+    // Note: this filters out files that do not match the above (e.g. READMEs
+    // or .js.map files in built folder, etc).
+    return steps.filter(s => s !== undefined);
   }
 
-  /**
-   * Implements the cog:getManifest grpc method, responding with a manifest definition, including
-   * details like the name of the cog, the version of the cog, any definitions for required
-   * authentication fields, and step definitions.
-   */
   getManifest(
     call: grpc.ServerUnaryCall<ManifestRequest>,
     callback: grpc.sendUnaryData<CogManifest>,
@@ -68,14 +71,8 @@ export class Cog implements ICogServiceServer {
     callback(null, manifest);
   }
 
-  /**
-   * Implements the cog:runSteps grpc method, responding to a stream of RunStepRequests and
-   * responding in kind with a stream of RunStepResponses. This method makes no guarantee that the
-   * order of step responses sent corresponds at all with the order of step requests received.
-   */
   runSteps(call: grpc.ServerDuplexStream<RunStepRequest, RunStepResponse>) {
-    // Instantiate a single client for all step requests.
-    const client = this.instantiateClient(call.metadata);
+    const client = this.getClientWrapper(call.metadata);
     let processing = 0;
     let clientEnded = false;
 
@@ -88,8 +85,8 @@ export class Cog implements ICogServiceServer {
 
       processing = processing - 1;
 
-      // If this was the last step to process and the client has ended the stream, then end our
-      // stream as well.
+      // If this was the last step to process and the client has ended the
+      // stream, then end our stream as well.
       if (processing === 0 && clientEnded) {
         call.end();
       }
@@ -105,10 +102,6 @@ export class Cog implements ICogServiceServer {
     });
   }
 
-  /**
-   * Implements the cog:runStep grpc method, responding to a single RunStepRequest with a single
-   * RunStepResponse.
-   */
   async runStep(
     call: grpc.ServerUnaryCall<RunStepRequest>,
     callback: grpc.sendUnaryData<RunStepResponse>,
@@ -118,17 +111,13 @@ export class Cog implements ICogServiceServer {
     callback(null, response);
   }
 
-  /**
-   * Helper method to dispatch a given step to its corresponding step class and handle error
-   * scenarios. Always resolves to a RunStepResponse, regardless of any underlying errors.
-   */
   private async dispatchStep(
     step: Step,
     metadata: grpc.Metadata,
-    clientWrapper: ClientWrapper = null,
+    client = null,
   ): Promise<RunStepResponse> {
-    // Use the provided client wrapper if given, or instantiate a new one.
-    const client = clientWrapper || this.instantiateClient(metadata);
+    // If a pre-auth'd client was provided, use it. Otherwise, create one.
+    const wrapper = client || this.getClientWrapper(metadata);
     const stepId = step.getStepId();
     let response: RunStepResponse = new RunStepResponse();
 
@@ -140,7 +129,7 @@ export class Cog implements ICogServiceServer {
     }
 
     try {
-      const stepExecutor: StepInterface = new this.stepMap[stepId](client);
+      const stepExecutor: StepInterface = new this.stepMap[stepId](wrapper);
       response = await stepExecutor.executeStep(step);
     } catch (e) {
       response.setOutcome(RunStepResponse.Outcome.ERROR);
@@ -150,10 +139,7 @@ export class Cog implements ICogServiceServer {
     return response;
   }
 
-  /**
-   * Helper method to instantiate an API client wrapper for this Cog.
-   */
-  private instantiateClient(auth: grpc.Metadata): ClientWrapper {
+  private getClientWrapper(auth: grpc.Metadata) {
     return new this.clientWrapperClass(auth);
   }
 
