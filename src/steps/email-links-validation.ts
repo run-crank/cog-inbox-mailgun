@@ -106,13 +106,7 @@ export class EmailLinksValidationStep extends BaseStep implements StepInterface 
       if (brokenUrls.length > 0) {
         const plain = brokenUrls.filter(f => f.type === 'Plain');
         const html = brokenUrls.filter(f => f.type === 'HTML');
-        return this.fail('Broken links were found in the email. URLs include: %s%s%s%s%s', [
-          `${nl}`,
-          `${nl}Plain Text: ${nl}`,
-          plain.length > 0 ? plain.map(f => `${f.url} (${f.message})`.trim()).join(`${nl}`) : `No URLs found in Plain Text Body${nl}`,
-          `${nl}${nl}HTML: ${nl}`,
-          html.length > 0 ? html.map(f => `${f.url} (${f.message})`.trim()).join(`${nl}`) : `No URLS found in HTML Body${nl}`,
-        ], [messageRecords, linkRecords]);
+        return this.fail('Broken links were found in the email', [], [messageRecords, linkRecords]);
       }
 
       return this.pass(
