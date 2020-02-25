@@ -1,6 +1,6 @@
-import { BaseStep, Field, StepInterface } from '../core/base-step';
+import { BaseStep, Field, StepInterface, ExpectedRecord } from '../core/base-step';
 import { EOL } from 'os';
-import { FieldDefinition, Step, StepDefinition } from '../proto/cog_pb';
+import { FieldDefinition, Step, StepDefinition, RecordDefinition } from '../proto/cog_pb';
 import { Inbox } from '../models';
 
 /*tslint:disable:no-else-after-return*/
@@ -18,6 +18,28 @@ export class EmailCountEqualsStep extends BaseStep implements StepInterface {
     field: 'count',
     type: FieldDefinition.Type.NUMERIC,
     description: 'The number received',
+  }];
+  protected expectedRecords: ExpectedRecord[] = [{
+    id: 'messages',
+    type: RecordDefinition.Type.TABLE,
+    fields: [{
+      field: '#',
+      type: FieldDefinition.Type.NUMERIC,
+      description: 'The Message\'s #',
+    }, {
+      field: 'Subject',
+      type: FieldDefinition.Type.STRING,
+      description: 'The Message\'s Subject',
+    }, {
+      field: 'From',
+      type: FieldDefinition.Type.STRING,
+      description: 'The Message\'s From',
+    }, {
+      field: 'To',
+      type: FieldDefinition.Type.STRING,
+      description: 'The Message\'s To',
+    }],
+    dynamicFields: true,
   }];
 
   async executeStep(step: Step) {
@@ -56,22 +78,46 @@ export class EmailCountEqualsStep extends BaseStep implements StepInterface {
         ]);
       }
 
+      const records = this.createRecords(inbox.items);
+
       // tslint:disable-next-line:triple-equals
       if (inbox.items.length == stepData.count) {
-        return this.pass('Found %d emails, as expected', [
-          inbox.items.length,
-        ]);
+        return this.pass(
+          'Found %d emails, as expected',
+          [inbox.items.length],
+          [records],
+        );
       } else {
-        return this.fail('Expected there to be %d emails, but there were actually %d. Their subjects are:\n\n%s', [
-          stepData.count,
-          inbox.items.length,
-          inbox.items.map(f => f['message']['headers']['subject']).join(EOL),
-        ]);
+        return this.fail(
+          'Expected there to be %d emails, but there were actually %d. Their subjects are:\n\n%s',
+          [stepData.count, inbox.items.length, inbox.items.map(f => f['message']['headers']['subject']).join(EOL)],
+          [records],
+        );
       }
 
     } catch (e) {
       return this.error('There was a problem checking emails: %s', [e.toString()]);
     }
+  }
+
+  createRecords(emails: Record<string, any>[]) {
+    const records = [];
+    emails.forEach((email, i) => {
+      records.push({
+        '#': i + 1,
+        Subject: email.message.headers.subject,
+        From: email.message.headers.from,
+        To: email.message.headers.to,
+      });
+    });
+
+    const headers = {
+      '#': '#',
+      Subject: 'Subject',
+      From: 'From',
+      To: 'To',
+    };
+    return this.table('messages', 'Received Email Messages', headers, records);
   }
 }
 

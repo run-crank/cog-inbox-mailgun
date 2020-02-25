@@ -57,6 +57,7 @@
     "typescript": "^3.5.1"
   },
   "dependencies": {
+    "@run-crank/utilities": "^0.1.5",
     "dom-parser": "^0.1.6",
     "get-urls": "^9.2.0",
     "google-protobuf": "^3.8.0",

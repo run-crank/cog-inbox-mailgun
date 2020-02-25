@@ -1,3 +1,4 @@
+// tslint:disable-next-line:max-line-length
 import { StepDefinition, FieldDefinition, RecordDefinition, Step as PbStep, RunStepResponse, StepRecord, TableRecord, BinaryRecord } from '../proto/cog_pb';
 import { Struct, Value } from 'google-protobuf/google/protobuf/struct_pb';
 import * as util from '@run-crank/utilities';
