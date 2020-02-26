@@ -104,8 +104,6 @@ export class EmailLinksValidationStep extends BaseStep implements StepInterface 
       const linkRecords = this.createLinkRecords(allUrls);
 
       if (brokenUrls.length > 0) {
-        const plain = brokenUrls.filter(f => f.type === 'Plain');
-        const html = brokenUrls.filter(f => f.type === 'HTML');
         return this.fail('Broken links were found in the email', [], [messageRecords, linkRecords]);
       }
 

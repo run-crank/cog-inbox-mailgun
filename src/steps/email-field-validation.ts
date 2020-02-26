@@ -68,7 +68,7 @@ export class EmailFieldValidationStep extends BaseStep implements StepInterface 
       }
 
       let record;
-      console.log(inbox.items[0]);
+
       if (inbox.items.length > 1) {
         record = this.createRecords(inbox.items);
       } else {

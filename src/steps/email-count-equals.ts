@@ -89,8 +89,8 @@ export class EmailCountEqualsStep extends BaseStep implements StepInterface {
         );
       } else {
         return this.fail(
-          'Expected there to be %d emails, but there were actually %d. Their subjects are:\n\n%s',
-          [stepData.count, inbox.items.length, inbox.items.map(f => f['message']['headers']['subject']).join(EOL)],
+          'Expected there to be %d emails, but there were actually %d.',
+          [stepData.count, inbox.items.length],
           [records],
         );
       }
