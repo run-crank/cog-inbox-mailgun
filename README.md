@@ -9,8 +9,8 @@ amount of time. Common use-cases include welcome emails, confirmation emails,
 and nurture/drip emails, triggered by configurations or activity on web forms,
 automation platforms, CRMs, etc.
 
-In order to make use of this Cog, you will need a Mailgun account, configured
-as described below in the Setup section.
+In order to make use of this Cog, you will need a (paid) Mailgun account,
+configured as described below in the Setup section.
 
 * [Installation](#installation)
 * [Setup](#setup)
@@ -35,8 +35,10 @@ emails sent to a domain configured for use with Mailgun.
 
 **Prerequisites**:
 - A domain or subdomain whose DNS records you can access/modify,
-- A [Mailgun account][sign-up-for-mailgun] (a free/trial version will work for
-  most use-cases),
+- A [Mailgun account][sign-up-for-mailgun] (~~free/trial version will work~~
+  ~~for most use-cases~~ as of March 2020, you'll need a plan that includes
+  log and message retention; a Foundation plan, starting at $35/mo, is the
+  least expensive, suitable option available),
 
 1. First, configure MX records for your domain or subdomain so that Mailgun is
    the system used to receive emails. Follow [Mailgun's directions here][mailgun-mx]
