@@ -5,8 +5,6 @@ import { Step, FieldDefinition, StepDefinition } from '../proto/cog_pb';
 import { Email, Inbox } from '../models';
 
 export class EmailFieldValidationStep extends BaseStep implements StepInterface {
-  private operators: string[] = ['should contain', 'should not contain', 'should be'];
-
   protected stepName: string = 'Check the content of an email';
   // tslint:disable-next-line:max-line-length
   protected stepExpression: string = 'the (?<field>(subject|body-html|body-plain|from)) of the (?<position>\\d+)(?:(st|nd|rd|th))? mailgun email for (?<email>.+) (?<operator>(should contain|should not contain|should be)) (?<expectation>.+)';
@@ -67,13 +65,15 @@ export class EmailFieldValidationStep extends BaseStep implements StepInterface 
         ]);
       }
 
+      const storageUrl: string = inbox.items.reverse()[position - 1].storage.url;
       let record;
 
       if (inbox.items.length > 1) {
         record = this.createRecords(inbox.items);
       } else {
-        record = this.createRecords(inbox.items);
-        // record = this.binary('eml', 'Email Message', 'text/eml', '');
+        const rawMessage = await this.client.getRawMimeMessage(storageUrl);
+        // tslint:disable-next-line:max-line-length
+        record = this.binary('eml', 'Email Message', 'text/eml', Buffer.from(rawMessage['body-mime']).toString('base64'));
       }
 
       if (!inbox.items[position - 1]) {
@@ -84,7 +84,6 @@ export class EmailFieldValidationStep extends BaseStep implements StepInterface 
         );
       }
 
-      const storageUrl: string = inbox.items.reverse()[position - 1].storage.url;
       const email: Email = await this.client.getEmailByStorageUrl(storageUrl);
 
       if (email === null || !email) {

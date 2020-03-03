@@ -4,9 +4,6 @@ import { Inbox } from '../models';
 
 import * as DomParser from 'dom-parser';
 import * as GetUrls from 'get-urls';
-import * as os from 'os';
-
-const nl = os.EOL;
 
 /*tslint:disable:no-else-after-return*/
 export class EmailLinksValidationStep extends BaseStep implements StepInterface {
@@ -55,6 +52,7 @@ export class EmailLinksValidationStep extends BaseStep implements StepInterface 
         ]);
       }
 
+      const storageUrl: string = inbox.items.reverse()[position - 1].storage.url;
       let messageRecords;
 
       if (!inbox.items[position - 1]) {
@@ -67,11 +65,11 @@ export class EmailLinksValidationStep extends BaseStep implements StepInterface 
       if (inbox.items.length > 1) {
         messageRecords = this.createMessageRecords(inbox.items);
       } else {
-        // messageRecords = this.binary('', '', 'text/eml', '');
-        messageRecords = this.createMessageRecords(inbox.items);
+        const rawMessage = await this.client.getRawMimeMessage(storageUrl);
+        // tslint:disable-next-line:max-line-length
+        record = this.binary('eml', 'Email Message', 'text/eml', Buffer.from(rawMessage['body-mime']).toString('base64'));
       }
 
-      const storageUrl: string = inbox.items.reverse()[position - 1].storage.url;
       const email: Record<string, any> = await this.client.getEmailByStorageUrl(storageUrl);
 
       if (email === null || !email) {
