@@ -1,7 +1,7 @@
 /*tslint:disable:no-else-after-return*/
 
-import { BaseStep, Field, StepInterface } from '../core/base-step';
-import { Step, FieldDefinition, StepDefinition } from '../proto/cog_pb';
+import { BaseStep, Field, StepInterface, ExpectedRecord } from '../core/base-step';
+import { Step, FieldDefinition, StepDefinition, RecordDefinition } from '../proto/cog_pb';
 import { Email, Inbox } from '../models';
 
 export class EmailFieldValidationStep extends BaseStep implements StepInterface {
@@ -29,6 +29,10 @@ export class EmailFieldValidationStep extends BaseStep implements StepInterface 
     field: 'expectation',
     type: FieldDefinition.Type.ANYSCALAR,
     description: 'Expected field value',
+  }];
+  protected expectedRecords: ExpectedRecord[] = [{
+    id: 'eml',
+    type: RecordDefinition.Type.BINARY,
   }];
 
   async executeStep(step: Step) {

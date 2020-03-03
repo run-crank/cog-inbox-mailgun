@@ -1,5 +1,5 @@
-import { BaseStep, Field, StepInterface } from '../core/base-step';
-import { FieldDefinition, Step, StepDefinition } from '../proto/cog_pb';
+import { BaseStep, Field, StepInterface, ExpectedRecord } from '../core/base-step';
+import { FieldDefinition, Step, StepDefinition, StepRecord, RecordDefinition } from '../proto/cog_pb';
 import { Inbox } from '../models';
 
 import * as DomParser from 'dom-parser';
@@ -20,6 +20,10 @@ export class EmailLinksValidationStep extends BaseStep implements StepInterface 
     field: 'position',
     type: FieldDefinition.Type.NUMERIC,
     description: 'The nth message to check from the email\'s inbox',
+  }];
+  protected expectedRecords: ExpectedRecord[] = [{
+    id: 'eml',
+    type: RecordDefinition.Type.BINARY,
   }];
 
   async executeStep(step: Step) {
@@ -67,7 +71,7 @@ export class EmailLinksValidationStep extends BaseStep implements StepInterface 
       } else {
         const rawMessage = await this.client.getRawMimeMessage(storageUrl);
         // tslint:disable-next-line:max-line-length
-        record = this.binary('eml', 'Email Message', 'text/eml', Buffer.from(rawMessage['body-mime']).toString('base64'));
+        messageRecords = this.binary('eml', 'Email Message', 'text/eml', Buffer.from(rawMessage['body-mime']).toString('base64'));
       }
 
       const email: Record<string, any> = await this.client.getEmailByStorageUrl(storageUrl);
