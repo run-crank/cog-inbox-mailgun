@@ -100,7 +100,7 @@ export class ClientWrapper {
           Authorization: this.basicAuth,
         },
       }).then((value) => {
-        resolve(JSON.parse(value));
+        resolve(JSON.parse(value)['body-mime']);
       }).catch(reject);
     });
   }

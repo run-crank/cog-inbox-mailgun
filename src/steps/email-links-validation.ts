@@ -71,7 +71,7 @@ export class EmailLinksValidationStep extends BaseStep implements StepInterface 
       } else {
         const rawMessage = await this.client.getRawMimeMessage(storageUrl);
         // tslint:disable-next-line:max-line-length
-        messageRecords = this.binary('eml', 'Email Message', 'text/eml', Buffer.from(rawMessage['body-mime']).toString('base64'));
+        messageRecords = this.binary('eml', 'Email Message', 'text/eml', Buffer.from(rawMessage).toString('base64'));
       }
 
       const email: Record<string, any> = await this.client.getEmailByStorageUrl(storageUrl);
