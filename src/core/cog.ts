@@ -1,3 +1,4 @@
+// tslint:disable:max-line-length
 import * as grpc from 'grpc';
 import { Struct, Value } from 'google-protobuf/google/protobuf/struct_pb';
 import * as fs from 'fs';
