@@ -25,9 +25,7 @@ describe('EmailFieldValidationStep', () => {
       get: sinon.stub(),
     };
     clientWrapperStub.getRawMimeMessage = sinon.stub();
-    clientWrapperStub.getRawMimeMessage.returns(Promise.resolve({
-      'body-mime': 'test',
-    }));
+    clientWrapperStub.getRawMimeMessage.returns(Promise.resolve('test'));
 
     clientWrapperStub.auth.get.withArgs('domain').returns('thisisjust.atomatest.com');
 

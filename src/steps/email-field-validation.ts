@@ -71,8 +71,6 @@ export class EmailFieldValidationStep extends BaseStep implements StepInterface 
         ]);
       }
 
-      const storageUrl: string = inbox.items.reverse()[position - 1].storage.url;
-
       if (inbox.items.length > 1) {
         tableRecord = this.createRecords(inbox.items);
       }
@@ -85,6 +83,7 @@ export class EmailFieldValidationStep extends BaseStep implements StepInterface 
         );
       }
 
+      const storageUrl: string = inbox.items.reverse()[position - 1].storage.url;
       const email: Email = await this.client.getEmailByStorageUrl(storageUrl);
 
       //// An unexpected error occurred
