@@ -56,7 +56,6 @@ export class EmailLinksValidationStep extends BaseStep implements StepInterface 
         ]);
       }
 
-      const storageUrl: string = inbox.items.reverse()[position - 1].storage.url;
       let messageRecords;
 
       if (!inbox.items[position - 1]) {
@@ -66,7 +65,9 @@ export class EmailLinksValidationStep extends BaseStep implements StepInterface 
         ]);
       }
 
-      if (inbox.items.length > 1) {
+      const storageUrl: string = inbox.items.reverse()[position - 1].storage.url;
+
+      if (inbox.items.length > 0) {
         messageRecords = this.createMessageRecords(inbox.items);
       } else {
         const rawMessage = await this.client.getRawMimeMessage(storageUrl);

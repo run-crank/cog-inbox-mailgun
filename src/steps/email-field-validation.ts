@@ -42,6 +42,8 @@ export class EmailFieldValidationStep extends BaseStep implements StepInterface 
     // tslint:disable-next-line:radix
     const position = parseInt(stepData.position) || 1;
     const operator = stepData.operator;
+    let tableRecord;
+    let binaryRecord;
 
     try {
       const domain: string = stepData.email.split('@')[1];
@@ -70,45 +72,50 @@ export class EmailFieldValidationStep extends BaseStep implements StepInterface 
       }
 
       const storageUrl: string = inbox.items.reverse()[position - 1].storage.url;
-      let record;
 
       if (inbox.items.length > 1) {
-        record = this.createRecords(inbox.items);
-      } else {
-        const rawMessage = await this.client.getRawMimeMessage(storageUrl);
-        // tslint:disable-next-line:max-line-length
-        record = this.binary('eml', 'Email Message', 'text/eml', Buffer.from(rawMessage).toString('base64'));
+        tableRecord = this.createRecords(inbox.items);
       }
 
       if (!inbox.items[position - 1]) {
         return this.error(
           'Email #%d hasn\'t been received yet: there are %d message(s) in the inbox.',
           [position, inbox.items.length],
-          [record],
+          inbox.items.length > 0 ? [tableRecord] : [],
         );
       }
 
       const email: Email = await this.client.getEmailByStorageUrl(storageUrl);
 
+      //// An unexpected error occurred
       if (email === null || !email) {
         return this.error(
           'There was a problem reading email #%d: email found but couldn\'t be read from storage.',
           [position],
-          [record],
+          inbox.items.length > 0 ? [tableRecord, binaryRecord] : [binaryRecord],
         );
       }
+
+      //// Create an eml; The email is verified existing at this point.
+      const rawMessage = await this.client.getRawMimeMessage(storageUrl);
+      binaryRecord = this.binary(
+        'eml',
+        'Email Message',
+        'text/eml',
+        Buffer.from(rawMessage).toString('base64'),
+      );
 
       if (this.executeComparison(expectation, email[field], operator)) {
         return this.pass(
           'Check on email %s passed: %s %s "%s"',
           [field, field, operator, expectation],
-          [record],
+          inbox.items.length > 0 ? [tableRecord, binaryRecord] : [binaryRecord],
         );
       } else {
         return this.fail(
-          'Check on email %s failed: %s %s "%s", but it was actually %s',
-          [field, field, operator, expectation, email[field]],
-          [record],
+          'Check on email %s failed: %s %s "%s"',
+          [field, field, operator, expectation],
+          inbox.items.length > 0 ? [tableRecord, binaryRecord] : [binaryRecord],
         );
       }
     } catch (e) {
