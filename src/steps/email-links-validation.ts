@@ -1,12 +1,9 @@
-import { BaseStep, Field, StepInterface } from '../core/base-step';
-import { FieldDefinition, Step, StepDefinition } from '../proto/cog_pb';
+import { BaseStep, Field, StepInterface, ExpectedRecord } from '../core/base-step';
+import { FieldDefinition, Step, StepDefinition, StepRecord, RecordDefinition } from '../proto/cog_pb';
 import { Inbox } from '../models';
 
 import * as DomParser from 'dom-parser';
 import * as GetUrls from 'get-urls';
-import * as os from 'os';
-
-const nl = os.EOL;
 
 /*tslint:disable:no-else-after-return*/
 export class EmailLinksValidationStep extends BaseStep implements StepInterface {
@@ -23,6 +20,10 @@ export class EmailLinksValidationStep extends BaseStep implements StepInterface 
     field: 'position',
     type: FieldDefinition.Type.NUMERIC,
     description: 'The nth message to check from the email\'s inbox',
+  }];
+  protected expectedRecords: ExpectedRecord[] = [{
+    id: 'eml',
+    type: RecordDefinition.Type.BINARY,
   }];
 
   async executeStep(step: Step) {
@@ -55,6 +56,8 @@ export class EmailLinksValidationStep extends BaseStep implements StepInterface 
         ]);
       }
 
+      let messageRecords;
+
       if (!inbox.items[position - 1]) {
         return this.error("Email #%d hasn't been received yet: there are %d message(s) in the inbox.", [
           position,
@@ -63,6 +66,15 @@ export class EmailLinksValidationStep extends BaseStep implements StepInterface 
       }
 
       const storageUrl: string = inbox.items.reverse()[position - 1].storage.url;
+
+      if (inbox.items.length > 0) {
+        messageRecords = this.createMessageRecords(inbox.items);
+      } else {
+        const rawMessage = await this.client.getRawMimeMessage(storageUrl);
+        // tslint:disable-next-line:max-line-length
+        messageRecords = this.binary('eml', 'Email Message', 'text/eml', Buffer.from(rawMessage).toString('base64'));
+      }
+
       const email: Record<string, any> = await this.client.getEmailByStorageUrl(storageUrl);
 
       if (email === null || !email) {
@@ -84,32 +96,30 @@ export class EmailLinksValidationStep extends BaseStep implements StepInterface 
       const plainUrls = Array.from(GetUrls(plain).values()).map((f) => { return { url: f, type: 'Plain' }; });
 
       const urls = new Set(htmlUrls.concat(plainUrls));
+      const sanitizedUrls = this.sanitizeUrl(Array.from(urls.values()));
 
       const response = await this.client.evaluateUrls(
-        this.sanitizeUrl(Array.from(urls.values())));
+        sanitizedUrls,
+      );
 
-      if (response.length > 0) {
-        const plain = response.filter(f => f.type === 'Plain');
-        const html = response.filter(f => f.type === 'HTML');
-        return this.fail('Broken links were found in the email. URLs include: %s%s%s%s%s', [
-          `${nl}`,
-          `${nl}Plain Text: ${nl}`,
-          plain.length > 0 ? plain.map(f => `${f.url} (${f.message})`.trim()).join(`${nl}`) : `No URLs found in Plain Text Body${nl}`,
-          `${nl}${nl}HTML: ${nl}`,
-          html.length > 0 ? html.map(f => `${f.url} (${f.message})`.trim()).join(`${nl}`) : `No URLS found in HTML Body${nl}`,
-        ]);
+      const brokenUrls = response.brokenUrls;
+      const allUrls = response.brokenUrls.concat(response.workingUrls);
+      const linkRecords = this.createLinkRecords(allUrls);
+
+      if (brokenUrls.length > 0) {
+        return this.fail('Broken links were found in the email', [], [linkRecords, messageRecords]);
       }
 
-      return this.pass("No broken links were found in email #%d in %s's inbox", [
-        position,
-        stepData.email,
-      ]);
+      return this.pass(
+        'No broken links were found in email #%d in %s\'s inbox',
+        [position, stepData.email],
+        [linkRecords, messageRecords],
+      );
     } catch (e) {
-      return this.error("There was a problem checking links in email #%d in %s's inbox: %s", [
-        stepData.position,
-        stepData.email,
-        e.toString(),
-      ]);
+      return this.error(
+        'There was a problem checking links in email #%d in %s\'s inbox: %s',
+        [stepData.position, stepData.email, e.toString()],
+      );
     }
   }
 
@@ -119,6 +129,39 @@ export class EmailLinksValidationStep extends BaseStep implements StepInterface 
     }
 
     return urls.filter(f => !f.url.includes('%3E'));
+  }
+
+  createMessageRecords(emails: Record<string, any>[]) {
+    const records = [];
+    emails.forEach((email, i) => {
+      records.push({
+        '#': i + 1,
+        Subject: email.message.headers.subject,
+        From: email.message.headers.from,
+        To: email.message.headers.to,
+      });
+    });
+
+    const headers = {
+      '#': '#',
+      Subject: 'Subject',
+      From: 'From',
+      To: 'To',
+    };
+    return this.table('messages', 'Received Email Messages', headers, records);
+  }
+
+  createLinkRecords(urls: Record<string, any>[]) {
+    const records = urls.map((url) => {
+      return {
+        Type: url.type,
+        Url: url.url,
+        StatusCode: url.statusCode,
+      };
+    });
+
+    const headers = { Type: 'Type', Url: 'URL', StatusCode: 'StatusCode' };
+    return this.table('links', 'Found Links', headers, records);
   }
 }
 

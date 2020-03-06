@@ -24,6 +24,8 @@ describe('EmailFieldValidationStep', () => {
     clientWrapperStub.auth = {
       get: sinon.stub(),
     };
+    clientWrapperStub.getRawMimeMessage = sinon.stub();
+    clientWrapperStub.getRawMimeMessage.returns(Promise.resolve('test'));
 
     clientWrapperStub.auth.get.withArgs('domain').returns('thisisjust.atomatest.com');
 
@@ -129,7 +131,8 @@ describe('EmailFieldValidationStep', () => {
 
   describe('Unexpected error fetching email using the storage url', () => {
     beforeEach(() => {
-      const inbox: Inbox = { items: [{ storage: { url: 'https://some-email.url/' } }] };
+      // tslint:disable-next-line:max-line-length
+      const inbox: any = { items: [{ storage: { url: 'https://some-email.url/' }, message: { headers: { subject: '', from: '', to: '' } } }, { storage: { url: 'https://some-email.url/' }, message: { headers: { subject: '', from: '', to: '' } } }] };
       protoStep.setData(Struct.fromJavaScript({
         email: 'someone@thisisjust.atomatest.com',
         field: 'subject',
@@ -147,7 +150,8 @@ describe('EmailFieldValidationStep', () => {
 
   describe('Pass scenarios', () => {
     beforeEach(() => {
-      const inbox: Inbox = { items: [{ storage: { url: 'https://some-email.url/' } }] };
+      // tslint:disable-next-line:max-line-length
+      const inbox: any = { items: [{ storage: { url: 'https://some-email.url/' }, message: { headers: { subject: '', from: '', to: '' } } }, { storage: { url: 'https://some-email.url/' }, message: { headers: { subject: '', from: '', to: '' } } }] };
       const email: Email = { subject: 'Welcome, Customer!' };
       clientWrapperStub.getInbox.returns(Promise.resolve(inbox));
       clientWrapperStub.getEmailByStorageUrl.returns(Promise.resolve(email));
@@ -192,7 +196,8 @@ describe('EmailFieldValidationStep', () => {
 
   describe('Fail scenarios', () => {
     beforeEach(() => {
-      const inbox: Inbox = { items: [{ storage: { url: 'https://some-email.url/' } }] };
+      // tslint:disable-next-line:max-line-length
+      const inbox: any = { items: [{ storage: { url: 'https://some-email.url/' }, message: { headers: { subject: '', from: '', to: '' } } }, { storage: { url: 'https://some-email.url/' }, message: { headers: { subject: '', from: '', to: '' } } }] };
       const email: Email = { subject: 'Welcome, Customer!' };
       clientWrapperStub.getInbox.returns(Promise.resolve(inbox));
       clientWrapperStub.getEmailByStorageUrl.returns(Promise.resolve(email));

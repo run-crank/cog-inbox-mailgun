@@ -83,7 +83,8 @@ describe('EmailCountEqualsStep', () => {
 
   describe('Expected count equals inbox items count', () => {
     beforeEach(() => {
-      const inbox: Inbox = { items: [{}, {}] };
+      // tslint:disable-next-line:max-line-length
+      const inbox = { items: [{ message: { headers: { subject: '', from: '', to: '' } } }, { message: { headers: { subject: '', from: '', to: '' } } }] };
       clientWrapperStub.getInbox.returns(Promise.resolve(inbox));
     });
 
@@ -101,14 +102,15 @@ describe('EmailCountEqualsStep', () => {
 
   describe('Expected count not equal to inbox items count', () => {
     beforeEach(() => {
-      const inbox: Object = { items: [{ message: { headers: { subject: '' } } }] };
+      // tslint:disable-next-line:max-line-length
+      const inbox = { items: [{ message: { headers: { subject: '', from: '', to: '' } } }, { message: { headers: { subject: '', from: '', to: '' } } }] };
       clientWrapperStub.getInbox.returns(Promise.resolve(inbox));
     });
 
     it('should respond with fail', async () => {
       protoStep.setData(Struct.fromJavaScript({
         email: 'someone@thisisjust.atomatest.com',
-        count: 2,
+        count: 10,
       }));
 
       const response: RunStepResponse = await stepUnderTest.executeStep(protoStep);

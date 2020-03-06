@@ -1,12 +1,10 @@
 /*tslint:disable:no-else-after-return*/
 
-import { BaseStep, Field, StepInterface } from '../core/base-step';
-import { Step, FieldDefinition, StepDefinition } from '../proto/cog_pb';
+import { BaseStep, Field, StepInterface, ExpectedRecord } from '../core/base-step';
+import { Step, FieldDefinition, StepDefinition, RecordDefinition } from '../proto/cog_pb';
 import { Email, Inbox } from '../models';
 
 export class EmailFieldValidationStep extends BaseStep implements StepInterface {
-  private operators: string[] = ['should contain', 'should not contain', 'should be'];
-
   protected stepName: string = 'Check the content of an email';
   // tslint:disable-next-line:max-line-length
   protected stepExpression: string = 'the (?<field>(subject|body-html|body-plain|from)) of the (?<position>\\d+)(?:(st|nd|rd|th))? mailgun email for (?<email>.+) (?<operator>(should contain|should not contain|should be)) (?<expectation>.+)';
@@ -32,6 +30,10 @@ export class EmailFieldValidationStep extends BaseStep implements StepInterface 
     type: FieldDefinition.Type.ANYSCALAR,
     description: 'Expected field value',
   }];
+  protected expectedRecords: ExpectedRecord[] = [{
+    id: 'eml',
+    type: RecordDefinition.Type.BINARY,
+  }];
 
   async executeStep(step: Step) {
     const stepData: any = step.getData() ? step.getData().toJavaScript() : {};
@@ -40,6 +42,8 @@ export class EmailFieldValidationStep extends BaseStep implements StepInterface 
     // tslint:disable-next-line:radix
     const position = parseInt(stepData.position) || 1;
     const operator = stepData.operator;
+    let tableRecord;
+    let binaryRecord;
 
     try {
       const domain: string = stepData.email.split('@')[1];
@@ -67,37 +71,51 @@ export class EmailFieldValidationStep extends BaseStep implements StepInterface 
         ]);
       }
 
+      if (inbox.items.length > 1) {
+        tableRecord = this.createRecords(inbox.items);
+      }
+
       if (!inbox.items[position - 1]) {
-        return this.error("Email #%d hasn't been received yet: there are %d message(s) in the inbox.", [
-          position,
-          inbox.items.length,
-        ]);
+        return this.error(
+          'Email #%d hasn\'t been received yet: there are %d message(s) in the inbox.',
+          [position, inbox.items.length],
+          inbox.items.length > 0 ? [tableRecord] : [],
+        );
       }
 
       const storageUrl: string = inbox.items.reverse()[position - 1].storage.url;
       const email: Email = await this.client.getEmailByStorageUrl(storageUrl);
 
+      //// An unexpected error occurred
       if (email === null || !email) {
-        return this.error("There was a problem reading email #%d: email found but couldn't be read from storage.", [
-          position,
-        ]);
+        return this.error(
+          'There was a problem reading email #%d: email found but couldn\'t be read from storage.',
+          [position],
+          inbox.items.length > 0 ? [tableRecord, binaryRecord] : [binaryRecord],
+        );
       }
 
+      //// Create an eml; The email is verified existing at this point.
+      const rawMessage = await this.client.getRawMimeMessage(storageUrl);
+      binaryRecord = this.binary(
+        'eml',
+        'Email Message',
+        'text/eml',
+        Buffer.from(rawMessage).toString('base64'),
+      );
+
       if (this.executeComparison(expectation, email[field], operator)) {
-        return this.pass('Check on email %s passed: %s %s "%s"', [
-          field,
-          field,
-          operator,
-          expectation,
-        ]);
+        return this.pass(
+          'Check on email %s passed: %s %s "%s"',
+          [field, field, operator, expectation],
+          inbox.items.length > 0 ? [tableRecord, binaryRecord] : [binaryRecord],
+        );
       } else {
-        return this.fail('Check on email %s failed: %s %s "%s", but it was actually %s', [
-          field,
-          field,
-          operator,
-          expectation,
-          email[field],
-        ]);
+        return this.fail(
+          'Check on email %s failed: %s %s "%s"',
+          [field, field, operator, expectation],
+          inbox.items.length > 0 ? [tableRecord, binaryRecord] : [binaryRecord],
+        );
       }
     } catch (e) {
       return this.error('There was a problem checking email messages: %s', [e.toString()]);
@@ -119,6 +137,26 @@ export class EmailFieldValidationStep extends BaseStep implements StepInterface 
     }
 
     return result;
+  }
+
+  createRecords(emails: Record<string, any>[]) {
+    const records = [];
+    emails.forEach((email, i) => {
+      records.push({
+        '#': i + 1,
+        Subject: email.message.headers.subject,
+        From: email.message.headers.from,
+        To: email.message.headers.to,
+      });
+    });
+
+    const headers = {
+      '#': '#',
+      Subject: 'Subject',
+      From: 'From',
+      To: 'To',
+    };
+    return this.table('messages', 'Received Email Messages', headers, records);
   }
 }
 
