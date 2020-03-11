@@ -104,6 +104,11 @@ export class EmailFieldValidationStep extends BaseStep implements StepInterface 
         Buffer.from(rawMessage).toString('base64'),
       );
 
+      if (field === 'body-plain') {
+        //// Remove all new lines and replace with whitespace
+        email[field] = email[field].replace(/(?:\r\n|\r|\n)/g, ' ');
+      }
+
       if (this.executeComparison(expectation, email[field], operator)) {
         return this.pass(
           'Check on email %s passed: %s %s "%s"',
