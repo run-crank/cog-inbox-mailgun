@@ -102,6 +102,8 @@ export class EmailCountEqualsStep extends BaseStep implements StepInterface {
 
   createRecords(emails: Record<string, any>[]) {
     const records = [];
+    // tslint:disable-next-line:no-parameter-reassignment
+    emails = emails.reverse();
     emails.forEach((email, i) => {
       records.push({
         '#': i + 1,
