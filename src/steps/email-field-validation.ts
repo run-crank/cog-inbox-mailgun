@@ -71,6 +71,11 @@ export class EmailFieldValidationStep extends BaseStep implements StepInterface 
         ]);
       }
 
+      //// Ensure proper ordering
+      if (inbox.items) {
+        inbox.items.reverse();
+      }
+
       if (inbox.items.length > 1) {
         tableRecord = this.createRecords(inbox.items);
       }
@@ -83,7 +88,7 @@ export class EmailFieldValidationStep extends BaseStep implements StepInterface 
         );
       }
 
-      const storageUrl: string = inbox.items.reverse()[position - 1].storage.url;
+      const storageUrl: string = inbox.items[position - 1].storage.url;
       const email: Email = await this.client.getEmailByStorageUrl(storageUrl);
 
       //// An unexpected error occurred
@@ -146,8 +151,7 @@ export class EmailFieldValidationStep extends BaseStep implements StepInterface 
 
   createRecords(emails: Record<string, any>[]) {
     const records = [];
-    const data = [...emails.reverse()];
-    data.forEach((email, i) => {
+    emails.forEach((email, i) => {
       records.push({
         '#': i + 1,
         Subject: email.message.headers.subject,
