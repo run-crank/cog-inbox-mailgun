@@ -71,8 +71,12 @@ export class EmailFieldValidationStep extends BaseStep implements StepInterface 
         ]);
       }
 
-      if (inbox.items.length > 1) {
+      //// Ensure proper ordering
+      if (inbox.items) {
         inbox.items.reverse();
+      }
+
+      if (inbox.items.length > 1) {
         tableRecord = this.createRecords(inbox.items);
       }
 
