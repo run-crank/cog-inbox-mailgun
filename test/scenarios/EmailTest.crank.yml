@@ -1,5 +1,5 @@
-scenario: Email Testing
-description: This test if the email sent to the lead is correct.
+scenario: Email Test
+description: This proves the "Check the content of an email" step works.
 
 tokens:
   test:
@@ -9,12 +9,12 @@ tokens:
     submit: button[type=submit]
   
 steps:
-- step: Navigate to http://go.automatoninc.com/dev-qa-email-confirmation.html
-- step: Fill out input[id=FirstName] with {{test.firstname}}
-- step: Fill out input[id=LastName] with {{test.lastname}}
-- step: Fill out input[id=Email] with {{test.email}}
-- step: Submit the form by clicking {{test.submit}}
-- waitFor: 300
-  step: Validate that the from of the 1st mailgun email for {{test.email}} should not contain gjkgfljg
-- step: Validate that the subject of the 1st mailgun email for {{test.email}} should contain Pontezas
-- step: Validate that the body-plain of the 1st mailgun email for {{test.email}} should contain Hogwart
+- step: Given I navigate to http://go.automatoninc.com/dev-qa-email-confirmation.html
+- step: When I fill out input[id=FirstName] with {{test.firstname}}
+- step: And I fill out input[id=LastName] with {{test.lastname}}
+- step: And I fill out input[id=Email] with {{test.email}}
+- step: And I submit the form by clicking {{test.submit}}
+- step: Then the from of the 1st mailgun email for {{test.email}} should not contain gjkgfljg
+  failAfter: 300
+- step: And the subject of the 1st mailgun email for {{test.email}} should contain {{test.firstname}}
+- step: And the body-plain of the 1st mailgun email for {{test.email}} should contain Hogwart
