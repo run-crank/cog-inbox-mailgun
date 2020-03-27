@@ -1,8 +1,8 @@
 import { BaseStep, Field, StepInterface, ExpectedRecord } from '../core/base-step';
 import { FieldDefinition, Step, StepDefinition, StepRecord, RecordDefinition } from '../proto/cog_pb';
 import { Inbox } from '../models';
+import { DOMParser } from 'xmldom';
 
-import * as DomParser from 'dom-parser';
 import * as GetUrls from 'get-urls';
 
 /*tslint:disable:no-else-after-return*/
@@ -86,12 +86,28 @@ export class EmailLinksValidationStep extends BaseStep implements StepInterface 
       const htmlBody: string = email['body-html'] || '';
       const plain: string = email['body-plain'] || '';
 
-      const parser = new DomParser();
-      const dom = parser.parseFromString(htmlBody);
+      const dom = new DOMParser({
+        errorHandler: {
+          warning: () => {},
+          error: () => {},
+          fatalError: () => {},
+        },
+      }).parseFromString(htmlBody);
 
-      const htmlUrls = dom.getElementsByTagName('a')
-                      .map((f) => { return { url: f.getAttribute('href'), type: 'HTML' }; })
-                      .filter(f => f.url.includes('http'));
+      const anchors = dom.getElementsByTagName('a');
+      const htmlUrls = [];
+      let href: string;
+      // tslint:disable-next-line:no-increment-decrement
+      for (let i = 0; i < anchors.length; i++) {
+        href = anchors.item(i).getAttribute('href');
+        if (href && href.includes('http')) {
+          htmlUrls.push({
+            url: href,
+            type: 'HTML',
+          });
+        }
+        href = '';
+      }
 
       const plainUrls = Array.from(GetUrls(plain).values()).map((f) => { return { url: f, type: 'Plain' }; });
 
