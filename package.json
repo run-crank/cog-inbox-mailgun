@@ -1,6 +1,6 @@
 {
   "name": "cog-inbox-mailgun",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "description": "Inbox (Mailgun) Cog for use with Crank",
   "license": "MIT",
   "cog": {
