@@ -24,6 +24,44 @@ export class EmailLinksValidationStep extends BaseStep implements StepInterface 
   protected expectedRecords: ExpectedRecord[] = [{
     id: 'eml',
     type: RecordDefinition.Type.BINARY,
+  }, {
+    id: 'messages',
+    type: RecordDefinition.Type.TABLE,
+    fields: [{
+      field: '#',
+      type: FieldDefinition.Type.NUMERIC,
+      description: 'Email receipt order number',
+    }, {
+      field: 'Subject',
+      type: FieldDefinition.Type.STRING,
+      description: 'Email subject line',
+    }, {
+      field: 'From',
+      type: FieldDefinition.Type.STRING,
+      description: 'Email from line',
+    }, {
+      field: 'To',
+      type: FieldDefinition.Type.STRING,
+      description: 'Email to line',
+    }],
+    dynamicFields: false,
+  }, {
+    id: 'links',
+    type: RecordDefinition.Type.TABLE,
+    fields: [{
+      field: 'Type',
+      type: FieldDefinition.Type.STRING,
+      description: 'Link Found In (e.g. HTML or Plain-Text)',
+    }, {
+      field: 'Url',
+      type: FieldDefinition.Type.URL,
+      description: 'Link URL',
+    }, {
+      field: 'StatusCode',
+      type: FieldDefinition.Type.NUMERIC,
+      description: 'HTTP Status code when the link was checked (e.g. 404 or 200)',
+    }],
+    dynamicFields: false,
   }];
 
   async executeStep(step: Step) {

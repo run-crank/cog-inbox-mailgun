@@ -25,21 +25,21 @@ export class EmailCountEqualsStep extends BaseStep implements StepInterface {
     fields: [{
       field: '#',
       type: FieldDefinition.Type.NUMERIC,
-      description: 'The Message\'s #',
+      description: 'Email receipt order number',
     }, {
       field: 'Subject',
       type: FieldDefinition.Type.STRING,
-      description: 'The Message\'s Subject',
+      description: 'Email subject line',
     }, {
       field: 'From',
       type: FieldDefinition.Type.STRING,
-      description: 'The Message\'s From',
+      description: 'Email from line',
     }, {
       field: 'To',
       type: FieldDefinition.Type.STRING,
-      description: 'The Message\'s To',
+      description: 'Email to line',
     }],
-    dynamicFields: true,
+    dynamicFields: false,
   }];
 
   async executeStep(step: Step) {
