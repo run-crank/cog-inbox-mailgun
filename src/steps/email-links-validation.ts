@@ -157,7 +157,8 @@ export class EmailLinksValidationStep extends BaseStep implements StepInterface 
       );
 
       const brokenUrls = response.brokenUrls;
-      const allUrls = response.brokenUrls.concat(response.workingUrls);
+      const allUrls = response.brokenUrls.concat(response.workingUrls)
+        .sort((a, b) => a.url.localeCompare(b.url));
       const linkRecords = this.createLinkRecords(allUrls);
 
       if (brokenUrls.length > 0) {
