@@ -213,10 +213,11 @@ export class EmailLinksValidationStep extends BaseStep implements StepInterface 
         Type: url.type,
         Url: url.url,
         StatusCode: url.statusCode,
+        FinalUrl: url.finalUrl,
       };
     });
 
-    const headers = { Type: 'Type', Url: 'URL', StatusCode: 'StatusCode' };
+    const headers = { Type: 'Type', Url: 'URL', StatusCode: 'StatusCode', FinalUrl: 'FinalUrl' };
     return this.table('links', 'Found Links', headers, records);
   }
 }

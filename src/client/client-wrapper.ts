@@ -118,6 +118,7 @@ export class ClientWrapper {
               message: 'Status code: 200',
               type: url.type,
               statusCode: '200',
+              finalUrl: response.request.uri.href,
             });
             resolve(response);
           }).catch((err) => {
@@ -126,6 +127,8 @@ export class ClientWrapper {
               message: err.statusCode ? `Status code: ${err.statusCode}` : 'No response received',
               type: url.type,
               statusCode: err.statusCode ? err.statusCode : 'No response received',
+              finalUrl: err.response && err.response.request
+                      ? err.response.request.uri.href : url.url,
             });
             resolve();
           });
