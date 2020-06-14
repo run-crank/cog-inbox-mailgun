@@ -151,6 +151,7 @@ export class EmailLinksValidationStep extends BaseStep implements StepInterface 
 
       const urls = new Set(htmlUrls.concat(plainUrls));
       const sanitizedUrls = this.sanitizeUrl(Array.from(urls.values()));
+      sanitizedUrls.forEach((value, i) => value.order = i + 1);
 
       const response = await this.client.evaluateUrls(
         sanitizedUrls,
@@ -158,7 +159,7 @@ export class EmailLinksValidationStep extends BaseStep implements StepInterface 
 
       const brokenUrls = response.brokenUrls;
       const allUrls = response.brokenUrls.concat(response.workingUrls)
-        .sort((a, b) => a.url.localeCompare(b.url));
+        .sort((a, b) => a.order - b.order);
       const linkRecords = this.createLinkRecords(allUrls);
 
       if (brokenUrls.length > 0) {
@@ -178,7 +179,7 @@ export class EmailLinksValidationStep extends BaseStep implements StepInterface 
     }
   }
 
-  private sanitizeUrl(urls): string[] {
+  private sanitizeUrl(urls): any[] {
     if (!urls) {
       return;
     }
