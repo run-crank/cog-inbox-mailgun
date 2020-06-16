@@ -118,7 +118,7 @@ export class ClientWrapper {
               message: 'Status code: 200',
               type: url.type,
               statusCode: '200',
-              finalUrl: response.request.uri.href,
+              finalUrl: response.request && response.request ? response.request.uri.href : url.url,
               order: url.order,
             });
             resolve(response);

@@ -2,8 +2,8 @@ import { BaseStep, Field, StepInterface, ExpectedRecord } from '../core/base-ste
 import { FieldDefinition, Step, StepDefinition, StepRecord, RecordDefinition } from '../proto/cog_pb';
 import { Inbox } from '../models';
 import { DOMParser } from 'xmldom';
-
-import * as GetUrls from 'get-urls';
+import * as urlRegex from 'url-regex';
+import * as normalizeUrl from 'normalize-url';
 
 /*tslint:disable:no-else-after-return*/
 export class EmailLinksValidationStep extends BaseStep implements StepInterface {
@@ -121,51 +121,25 @@ export class EmailLinksValidationStep extends BaseStep implements StepInterface 
         ]);
       }
 
+      // Prepare HTML and Plain Text URLs
       const htmlBody: string = email['body-html'] || '';
-      const plain: string = email['body-plain'] || '';
+      const plainTextBody: string = email['body-plain'] || '';
+      const htmlUrls = this.extractUrlsFromHtmlBody(htmlBody);
+      const plainUrls = this.extractUrlsFromPlainTextBody(plainTextBody);
 
-      const dom = new DOMParser({
-        errorHandler: {
-          warning: () => {},
-          error: () => {},
-          fatalError: () => {},
-        },
-      }).parseFromString(htmlBody);
-
-      const anchors = dom.getElementsByTagName('a');
-      const htmlUrls = [];
-      let href: string;
-      // tslint:disable-next-line:no-increment-decrement
-      for (let i = 0; i < anchors.length; i++) {
-        href = anchors.item(i).getAttribute('href');
-        if (href && href.includes('http')) {
-          htmlUrls.push({
-            url: href,
-            type: 'HTML',
-          });
-        }
-        href = '';
-      }
-
-      htmlUrls.forEach((value, i) => value.order = i + 1);
-
-      const plainUrls: any[] = Array.from(GetUrls(plain).values())
-        .map((f) => { return { url: f, type: 'Plain' }; });
-      plainUrls.forEach((value, i) => value.order = i + 1);
-
+      // Use `Set` to ensure uniqueness and each unique URL gets evaluated only once
       const urls = new Set(htmlUrls.concat(plainUrls));
-      const sanitizedUrls = this.sanitizeUrl(Array.from(urls.values()));
+      const sanitizedUrls = this.sanitizeUrls(Array.from(urls.values()));
 
-      const response = await this.client.evaluateUrls(
-        sanitizedUrls,
-      );
+      // Evaluate every URLs to check which are broken
+      const response = await this.client.evaluateUrls(sanitizedUrls);
 
-      const brokenUrls = response.brokenUrls;
+      // Join all URLs and order them as found initially from the email.
       const allUrls = response.brokenUrls.concat(response.workingUrls)
         .sort((a, b) => a.order - b.order);
       const linkRecords = this.createLinkRecords(allUrls);
 
-      if (brokenUrls.length > 0) {
+      if (response.brokenUrls.length > 0) {
         return this.fail('Broken links were found in the email', [], [linkRecords, messageRecords]);
       }
 
@@ -182,12 +156,65 @@ export class EmailLinksValidationStep extends BaseStep implements StepInterface 
     }
   }
 
-  private sanitizeUrl(urls): any[] {
+  private sanitizeUrls(urls): any[] {
     if (!urls) {
       return;
     }
 
-    return urls.filter(f => !f.url.includes('%3E'));
+    return urls.map((url) => {
+      url.url = url.url.replace('%3E', '');
+      return url;
+    });
+  }
+
+  private extractUrlsFromHtmlBody(htmlBody: string): any[] {
+    const dom = new DOMParser({
+      errorHandler: {
+        warning: () => {},
+        error: () => {},
+        fatalError: () => {},
+      },
+    }).parseFromString(htmlBody);
+
+    const anchors = dom.getElementsByTagName('a');
+    const htmlUrls = [];
+    let href: string;
+    // tslint:disable-next-line:no-increment-decrement
+    for (let i = 0; i < anchors.length; i++) {
+      href = anchors.item(i).getAttribute('href');
+      if (href && href.includes('http')) {
+        htmlUrls.push({
+          url: href,
+          type: 'HTML',
+        });
+      }
+      href = '';
+    }
+
+    // Ensure ordering as found from the inbox
+    htmlUrls.forEach((value, i) => value.order = i + 1);
+
+    return htmlUrls;
+  }
+
+  private extractUrlsFromPlainTextBody(plainTextBody: string): any[] {
+    // Use a `Set` to ensure uniqueness
+    const unique = new Set();
+
+    const normalizeOptions: normalizeUrl.Options = {
+      stripWWW: false,
+      sortQueryParameters: false,
+      removeTrailingSlash: false,
+    };
+
+    const urls: string[] = plainTextBody.match(urlRegex()) || [];
+    urls.map(url => unique.add(normalizeUrl(url.trim().replace(/\.+$/, ''), normalizeOptions)));
+
+    const result: any[] = Array.from(unique.values())
+      .map((f) => { return { url: f, type: 'Plain' }; });
+    // Ensure ordering as found in the email
+    result.forEach((value, i) => value.order = i + 1);
+    return result;
   }
 
   createMessageRecords(emails: Record<string, any>[]) {
