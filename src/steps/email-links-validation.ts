@@ -147,11 +147,14 @@ export class EmailLinksValidationStep extends BaseStep implements StepInterface 
         href = '';
       }
 
-      const plainUrls = Array.from(GetUrls(plain).values()).map((f) => { return { url: f, type: 'Plain' }; });
+      htmlUrls.forEach((value, i) => value.order = i + 1);
+
+      const plainUrls: any[] = Array.from(GetUrls(plain).values())
+        .map((f) => { return { url: f, type: 'Plain' }; });
+      plainUrls.forEach((value, i) => value.order = i + 1);
 
       const urls = new Set(htmlUrls.concat(plainUrls));
       const sanitizedUrls = this.sanitizeUrl(Array.from(urls.values()));
-      sanitizedUrls.forEach((value, i) => value.order = i + 1);
 
       const response = await this.client.evaluateUrls(
         sanitizedUrls,
@@ -208,16 +211,25 @@ export class EmailLinksValidationStep extends BaseStep implements StepInterface 
   }
 
   createLinkRecords(urls: Record<string, any>[]) {
-    const records = urls.map((url) => {
+    const asRecord = (url) => {
       return {
         Type: url.type,
         Url: url.url,
         StatusCode: url.statusCode,
         FinalUrl: url.finalUrl,
       };
-    });
+    };
+    const html = urls.filter(url => url.type === 'HTML').map(asRecord);
+    const plain = urls.filter(url => url.type === 'Plain').map(asRecord);
+    const records = html.concat(plain);
 
-    const headers = { Type: 'Type', Url: 'URL', StatusCode: 'StatusCode', FinalUrl: 'FinalUrl' };
+    const headers = {
+      Type: 'Type',
+      Url: 'URL',
+      StatusCode:
+      'StatusCode',
+      FinalUrl: 'FinalUrl',
+    };
     return this.table('links', 'Found Links', headers, records);
   }
 }
