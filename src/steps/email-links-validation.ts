@@ -208,7 +208,8 @@ export class EmailLinksValidationStep extends BaseStep implements StepInterface 
     };
 
     const urls: string[] = plainTextBody.match(urlRegex()) || [];
-    urls.map(url => unique.add(normalizeUrl(url.trim().replace(/\.+$/, ''), normalizeOptions)));
+    urls.map(url =>
+      unique.add(normalizeUrl(url.trim().replace(/[,\.\]["<>{}`]*$/, ''), normalizeOptions)));
 
     const result: any[] = Array.from(unique.values())
       .map((f) => { return { url: f, type: 'Plain' }; });
