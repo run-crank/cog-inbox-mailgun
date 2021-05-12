@@ -60,7 +60,7 @@
   "dependencies": {
     "@run-crank/utilities": "^0.4.2",
     "google-protobuf": "^3.8.0",
-    "grpc": "^1.21.1",
+    "grpc": "^1.24.9",
     "https": "^1.0.0",
     "normalize-url": "^5.0.0",
     "request": "^2.88.0",
