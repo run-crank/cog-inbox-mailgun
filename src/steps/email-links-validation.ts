@@ -123,12 +123,13 @@ export class EmailLinksValidationStep extends BaseStep implements StepInterface 
 
       // Prepare HTML and Plain Text URLs
       const htmlBody: string = email['body-html'] || '';
-      const plainTextBody: string = email['body-plain'] || '';
+      // const plainTextBody: string = email['body-plain'] || '';
       const htmlUrls = this.extractUrlsFromHtmlBody(htmlBody);
-      const plainUrls = this.extractUrlsFromPlainTextBody(plainTextBody);
+      // const plainUrls = this.extractUrlsFromPlainTextBody(plainTextBody);
 
       // Use `Set` to ensure uniqueness and each unique URL gets evaluated only once
-      const urls = new Set(htmlUrls.concat(plainUrls));
+      // const urls = new Set(htmlUrls.concat(plainUrls));
+      const urls = new Set(htmlUrls);
       const sanitizedUrls = this.sanitizeUrls(Array.from(urls.values()));
 
       // Evaluate every URLs to check which are broken
@@ -197,26 +198,26 @@ export class EmailLinksValidationStep extends BaseStep implements StepInterface 
     return htmlUrls;
   }
 
-  private extractUrlsFromPlainTextBody(plainTextBody: string): any[] {
-    // Use a `Set` to ensure uniqueness
-    const unique = new Set();
+  // private extractUrlsFromPlainTextBody(plainTextBody: string): any[] {
+  //   // Use a `Set` to ensure uniqueness
+  //   const unique = new Set();
 
-    const normalizeOptions: normalizeUrl.Options = {
-      stripWWW: false,
-      sortQueryParameters: false,
-      removeTrailingSlash: false,
-    };
+  //   const normalizeOptions: normalizeUrl.Options = {
+  //     stripWWW: false,
+  //     sortQueryParameters: false,
+  //     removeTrailingSlash: false,
+  //   };
 
-    const urls: string[] = plainTextBody.match(urlRegex()) || [];
-    urls.map(url =>
-      unique.add(normalizeUrl(url.trim().replace(/[,\.\]["<>{}`]*$/, ''), normalizeOptions)));
+  //   const urls: string[] = plainTextBody.match(urlRegex()) || [];
+  //   urls.map(url =>
+  //     unique.add(normalizeUrl(url.trim().replace(/[,\.\]["<>{}`]*$/, ''), normalizeOptions)));
 
-    const result: any[] = Array.from(unique.values())
-      .map((f) => { return { url: f, type: 'Plain' }; });
-    // Ensure ordering as found in the email
-    result.forEach((value, i) => value.order = i + 1);
-    return result;
-  }
+  //   const result: any[] = Array.from(unique.values())
+  //     .map((f) => { return { url: f, type: 'Plain' }; });
+  //   // Ensure ordering as found in the email
+  //   result.forEach((value, i) => value.order = i + 1);
+  //   return result;
+  // }
 
   createMessageRecords(emails: Record<string, any>[]) {
     const records = [];
