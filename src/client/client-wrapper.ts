@@ -108,34 +108,49 @@ export class ClientWrapper {
   public async evaluateUrls(urls) {
     const brokenUrls = [];
     const workingUrls = [];
+    const redirectUrls = [];
 
-    await Promise.all(urls.map((url) => {
-      return new Promise((resolve) => {
-        this.request.get(url.url)
-          .then((response) => {
-            workingUrls.push({
-              url: url.url,
-              message: 'Status code: 200',
-              type: url.type,
-              statusCode: '200',
-              finalUrl: response.request ? response.request.uri.href : url.url,
-              order: url.order,
+    const checkUrls = async (urls) => {
+      await Promise.all(urls.map((url) => {
+        return new Promise((resolve) => {
+          this.request.get(url.url)
+            .then((response) => {
+              // The following code will check for redirect urls from marketo forms
+              if (response.includes('var redirecturl') && response.includes('window.self.location = redirecturl') && response.includes('function redirect() {')) {
+                const re = /(?<=var redirecturl = ').*?(?=')/;
+                const redirectLink = re.exec(response)[0];
+                redirectUrls.push({
+                  url: redirectLink,
+                  type: 'HTML',
+                });
+              }
+              workingUrls.push({
+                url: url.url,
+                message: 'Status code: 200',
+                type: url.type,
+                statusCode: '200',
+                finalUrl: response.request ? response.request.uri.href : url.url,
+                order: url.order,
+              });
+              resolve(response);
+            }).catch((err) => {
+              brokenUrls.push({
+                url: err.response && err.response.request ? err.response.request.uri.href : url.url,
+                message: err.statusCode ? `Status code: ${err.statusCode}` : 'No response received',
+                type: url.type,
+                statusCode: err.statusCode ? err.statusCode : 'No response received',
+                finalUrl: err.response && err.response.request
+                        ? err.response.request.uri.href : url.url,
+                order: url.order,
+              });
+              resolve();
             });
-            resolve(response);
-          }).catch((err) => {
-            brokenUrls.push({
-              url: err.response && err.response.request ? err.response.request.uri.href : url.url,
-              message: err.statusCode ? `Status code: ${err.statusCode}` : 'No response received',
-              type: url.type,
-              statusCode: err.statusCode ? err.statusCode : 'No response received',
-              finalUrl: err.response && err.response.request
-                      ? err.response.request.uri.href : url.url,
-              order: url.order,
-            });
-            resolve();
-          });
-      });
-    }));
+        });
+      }));
+    };
+
+    await checkUrls(urls);
+    await checkUrls(redirectUrls);
 
     const response = { brokenUrls, workingUrls };
     return Promise.resolve(response);
