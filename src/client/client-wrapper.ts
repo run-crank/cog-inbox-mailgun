@@ -119,10 +119,13 @@ export class ClientWrapper {
               if (response.includes('var redirecturl') && response.includes('window.self.location = redirecturl') && response.includes('function redirect() {')) {
                 const re = /(?<=var redirecturl = ').*?(?=')/;
                 const redirectLink = re.exec(response)[0];
-                redirectUrls.push({
-                  url: redirectLink,
-                  type: 'HTML',
-                });
+                // Don't include mailto: links
+                if (!redirectLink.includes('mailto:')) {
+                  redirectUrls.push({
+                    url: redirectLink,
+                    type: 'HTML',
+                  });
+                }
               }
               workingUrls.push({
                 url: url.url,
