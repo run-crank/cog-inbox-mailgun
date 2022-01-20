@@ -58,10 +58,11 @@
     "typescript": "^3.5.1"
   },
   "dependencies": {
-    "@run-crank/utilities": "^0.4.4",
+    "@run-crank/utilities": "^0.4.5",
     "google-protobuf": "^3.8.0",
     "grpc": "^1.21.1",
     "https": "^1.0.0",
+    "mailgun-js": "^0.22.0",
     "normalize-url": "^5.0.0",
     "request": "^2.88.0",
     "request-promise": "^4.2.4",
