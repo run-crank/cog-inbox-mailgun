@@ -137,15 +137,30 @@ export class ClientWrapper {
               });
               resolve(response);
             }).catch((err) => {
-              brokenUrls.push({
-                url: err.response && err.response.request ? err.response.request.uri.href : url.url,
-                message: err.statusCode ? `Status code: ${err.statusCode}` : 'No response received',
-                type: url.type,
-                statusCode: err.statusCode ? err.statusCode : 'No response received',
-                finalUrl: err.response && err.response.request
-                        ? err.response.request.uri.href : url.url,
-                order: url.order,
-              });
+              if (err.statusCode === 999) {
+                // If this is an error code 999 (LinkedIn), then add this to the working urls
+                workingUrls.push({
+                  url: err.response && err.response.request
+                    ? err.response.request.uri.href : url.url,
+                  message: 'Status code: 999',
+                  type: url.type,
+                  statusCode: '999',
+                  finalUrl: err.response && err.response.request
+                    ? err.response.request.uri.href : url.url,
+                  order: url.order,
+                });
+              } else {
+                brokenUrls.push({
+                  url: err.response && err.response.request
+                    ? err.response.request.uri.href : url.url,
+                  message: err.statusCode ? `Status code: ${err.statusCode}` : 'No response received',
+                  type: url.type,
+                  statusCode: err.statusCode ? err.statusCode : 'No response received',
+                  finalUrl: err.response && err.response.request
+                    ? err.response.request.uri.href : url.url,
+                  order: url.order,
+                });
+              }
               resolve();
             });
         });
