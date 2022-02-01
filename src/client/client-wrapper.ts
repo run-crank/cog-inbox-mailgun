@@ -137,7 +137,7 @@ export class ClientWrapper {
               });
               resolve(response);
             }).catch((err) => {
-              if (err.statusCode === 999) {
+              if (err.statusCode && err.statusCode === 999) {
                 // If this is an error code 999 (LinkedIn), then add this to the working urls
                 workingUrls.push({
                   url: err.response && err.response.request
