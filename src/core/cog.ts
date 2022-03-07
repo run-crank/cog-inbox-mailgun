@@ -195,10 +195,10 @@ export class Cog implements ICogServiceServer {
 
   private getClientWrapper(auth: grpc.Metadata, idMap: {} = null) {
     if (this.redisClient) {
-      const client = new ClientWrapper(auth);
+      const client = new ClientWrapper(auth, idMap);
       return new this.clientWrapperClass(client, this.redisClient, idMap);
     }
 
-    return new ClientWrapper(auth);
+    return new ClientWrapper(auth, idMap);
   }
 }

@@ -33,7 +33,7 @@ export class ClientWrapper {
   private axiosClient: any;
   private request: RequestPromise.RequestPromiseAPI;
 
-  constructor(auth: grpc.Metadata, clientConstructor = https, request = RequestPromise, axiosConstructor = axios) {
+  constructor(auth: grpc.Metadata,  public idMap: any, clientConstructor = https, request = RequestPromise, axiosConstructor = axios) {
     this.auth = auth;
     this.request = request;
     const creds: string = `api:${this.auth.get('apiKey').toString()}`;
@@ -46,10 +46,10 @@ export class ClientWrapper {
     });
   }
 
-  public async getValidationEmail(metadata: any = {}) {
+  public async getValidationEmail() {
     return new Promise(async (resolve, reject) => {
       try {
-        this.axiosClient.get(`/run/${metadata.scenarioId}/manual-validation`).then((response) => {
+        this.axiosClient.get(`/run/${this.idMap.scenarioId}/manual-validation`).then((response) => {
           resolve(response.data);
         }).catch((error) => {
           reject(error);
@@ -61,10 +61,11 @@ export class ClientWrapper {
     });
   }
 
-  public async createValidationEmail(emailAddress: string, testPrompt: string, metadata: any = {}) {
+  public async createValidationEmail(emailAddress: string, testPrompt: string) {
     return new Promise(async (resolve, reject) => {
       try {
-        this.axiosClient.post(`/run/${metadata.requestorId}/manual-validation`, {
+        console.log(this.idMap);
+        this.axiosClient.post(`/run/${this.idMap.scenarioId}/manual-validation`, {
           emailAddress,
           testPrompt,
         }).then((response) => {
@@ -79,16 +80,16 @@ export class ClientWrapper {
 
   }
 
-  public async sendValidationEmail(to: string, subject: string, metadata: any = {}) {
+  public async sendValidationEmail(to: string, subject: string) {
     return new Promise(async (resolve, reject) => {
       try {
-        const url = `${process.env.baseUrl}/home/${metadata.requestorId}/manualvalidation/${metadata.scenarioId}`;
+        const url = `${process.env.baseUrl}/home/${this.idMap.requestorId}/manualvalidation/${this.idMap.scenarioId}`;
         const body = `
           Here is the link to validate your scenario:
           <br>
           ${url}
         `;
-        await this.sendEmail(to, subject, body, metadata);
+        await this.sendEmail(to, subject, body);
         resolve(null);
       } catch (e) {
         reject(e.message);
@@ -97,7 +98,7 @@ export class ClientWrapper {
 
   }
 
-  public async sendEmail(to: string, subject: string, body: string, metadata: Object = {}) {
+  public async sendEmail(to: string, subject: string, body: string) {
     return new Promise(async (resolve, reject) => {
       try {
         const mg = mailgun({ apiKey: this.auth.get('apiKey').toString(), domain: this.auth.get('domain').toString() });
