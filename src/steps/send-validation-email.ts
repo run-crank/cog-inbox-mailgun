@@ -20,11 +20,11 @@ export class SendValidationEmailStep extends BaseStep implements StepInterface {
   protected expectedRecords: ExpectedRecord[] = [];
 
   async executeStep(step: Step) {
-    const stepData: any = step.getData() ? step.getData().toJavaScript() : {};
-    const email = stepData.email;
-    const validation = stepData.validation;
-
     try {
+      const stepData: any = step.getData() ? step.getData().toJavaScript() : {};
+      const email = stepData.email;
+      const validation = stepData.validation;
+
       // Make sure that the manual validation data is created before sending the email
       await this.client.createValidationEmail(email, validation);
       await this.client.sendValidationEmail(email, 'StackMoxie: Scenario Validation');

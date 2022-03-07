@@ -65,6 +65,7 @@ export class ClientWrapper {
     return new Promise(async (resolve, reject) => {
       try {
         console.log(process.env.BASE_URL);
+        console.log(process.env);
         console.log(this.idMap);
         this.axiosClient.post(`/run/${this.idMap.scenarioId}/manual-validation`, {
           emailAddress,
