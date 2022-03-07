@@ -1,11 +1,13 @@
 import * as grpc from 'grpc';
 import * as https from 'https';
 import * as RequestPromise from 'request-promise';
+import * as mailgun from 'mailgun-js';
 
 import { Field } from '../core/base-step';
 import { FieldDefinition } from '../proto/cog_pb';
 import { Inbox, Email } from '../models';
 
+const axios = require('axios');
 export class ClientWrapper {
   public static expectedAuthFields: Field[] = [{
     field: 'apiKey',
@@ -28,14 +30,92 @@ export class ClientWrapper {
   private auth: grpc.Metadata;
   private basicAuth: string;
   private client: any;
+  private axiosClient: any;
   private request: RequestPromise.RequestPromiseAPI;
 
-  constructor(auth: grpc.Metadata, clientConstructor = https, request = RequestPromise) {
+  constructor(auth: grpc.Metadata, clientConstructor = https, request = RequestPromise, axiosConstructor = axios) {
     this.auth = auth;
     this.request = request;
     const creds: string = `api:${this.auth.get('apiKey').toString()}`;
     this.basicAuth = `Basic ${Buffer.from(creds).toString('base64')}`;
     this.client = clientConstructor;
+    ;
+    this.axiosClient = axiosConstructor.create({
+      baseURL: `${process.env.baseUrl}/api/v1`,
+      timeout: 10000,
+      headers: {}
+    });
+  }
+
+  public async getValidationEmail(metadata: any = {}) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        this.axiosClient.get(`/run/${metadata.scenarioId}/manual-validation`).then(function (response) {
+          resolve(response.data);
+        }).catch(function (error) {
+          reject(error);
+        });
+      } catch (e) {
+        reject(e);
+      }
+
+    })
+  }
+
+  public async createValidationEmail(emailAddress: string, testPrompt: string, metadata: any = {}) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        this.axiosClient.post(`/run/${metadata.requestorId}/manual-validation`, {
+          emailAddress,
+          testPrompt
+        }).then(function (response) {
+          resolve(response.data);
+        }).catch(function (error) {
+          reject(error);
+        });
+      } catch (e) {
+        reject(e);
+      }
+    });
+
+  }
+
+  public async sendValidationEmail(to: string, subject: string, metadata: any = {}) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        var url = `${process.env.baseUrl}/home/${metadata.requestorId}/manualvalidation/${metadata.scenarioId}`
+        var body = `
+          Here is the link to validate your scenario:
+          <br>
+          ${url}
+        `;
+        await this.sendEmail(to, subject, body, metadata);
+        resolve(null);
+      } catch (e) {
+        reject(e.message);
+      }
+    });
+
+  }
+
+  public async sendEmail(to: string, subject: string, body: string, metadata: Object = {}) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const mg = mailgun({ apiKey: this.auth.get('apiKey').toString(), domain: this.auth.get('domain').toString() });
+        const emailData = {
+          from: `StackMoxie <noreply@${this.auth.get('domain').toString()}>`,
+          to: to,
+          subject: subject,
+          html: body,
+        };
+        mg.messages().send(emailData, (error, body) => {
+          console.log('email sent: ', body);
+        });
+        resolve(null);
+      } catch (e) {
+        reject(e.message);
+      }
+    })
   }
 
   public async getInbox(email: string): Promise<Inbox> {
@@ -161,7 +241,7 @@ export class ClientWrapper {
                   order: url.order,
                 });
               }
-              resolve();
+              resolve(null);
             });
         });
       }));

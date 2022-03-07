@@ -1,4 +1,3 @@
-// tslint:disable:max-line-length
 import { StepDefinition, FieldDefinition, RecordDefinition, Step as PbStep, RunStepResponse, StepRecord, TableRecord, BinaryRecord } from '../proto/cog_pb';
 import { Struct, Value } from 'google-protobuf/google/protobuf/struct_pb';
 import * as util from '@run-crank/utilities';
@@ -36,13 +35,7 @@ export abstract class BaseStep {
   protected expectedRecords?: ExpectedRecord[];
   protected stepHelp?: string;
 
-  public operatorFailMessages;
-  public operatorSuccessMessages;
-
-  constructor(protected client) {
-    this.operatorFailMessages = util.operatorFailMessages;
-    this.operatorSuccessMessages = util.operatorSuccessMessages;
-  }
+  constructor(protected client) {}
 
   getId(): string {
     return this.constructor.name;
@@ -92,8 +85,8 @@ export abstract class BaseStep {
     return stepDefinition;
   }
 
-  compare(operator: string, actualValue: string, value: string): boolean {
-    return util.compare(operator, actualValue, value);
+  assert(operator: string, actualValue: string, expectedValue: string, field: string): util.AssertionResult {
+    return util.assert(operator, actualValue, expectedValue, field);
   }
 
   protected pass(message: string, messageArgs: any[] = [], records: StepRecord[] = []): RunStepResponse {
