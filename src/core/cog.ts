@@ -113,11 +113,11 @@ export class Cog implements ICogServiceServer {
       processing = processing + 1;
 
       if (!clientCreated) {
-        idMap = this.redisClient ? {
+        idMap = {
           requestId: runStepRequest.getRequestId(),
           scenarioId: runStepRequest.getScenarioId(),
           requestorId: runStepRequest.getRequestorId(),
-        } : null;
+        };
         client = await this.getClientWrapper(call.metadata, idMap);
         clientCreated = true;
       }

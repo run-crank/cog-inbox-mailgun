@@ -71,8 +71,10 @@ export class ClientWrapper {
           emailAddress,
           testPrompt,
         }).then((response) => {
+          console.log('Post Manual Validation Response: ', response.data);
           resolve(response.data);
         }).catch((error) => {
+          console.log('Post Manual Validation Error: ', error.message);
           reject(error);
         });
       } catch (e) {
