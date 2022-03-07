@@ -22,7 +22,7 @@ export class CheckValidationEmailStep extends BaseStep implements StepInterface 
       }
 
       if (validationEmail.testApproved) {
-        return this.pass(`Validation email was evaluated as passing by %s`, [validationEmail.emailAddress]);
+        return this.pass('Validation email was evaluated as passing by %s', [validationEmail.emailAddress]);
       } else {
         return this.fail('Validation email was evaluated as failed by %s', [validationEmail.emailAddress]);
       }

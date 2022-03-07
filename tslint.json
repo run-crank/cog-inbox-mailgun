@@ -4,6 +4,8 @@
       "tslint-config-airbnb"
   ],
   "jsRules": {},
-  "rules": {},
+  "rules": {
+    "max-line-length": [false]
+  },
   "rulesDirectory": []
 }

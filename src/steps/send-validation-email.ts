@@ -29,7 +29,7 @@ export class SendValidationEmailStep extends BaseStep implements StepInterface {
       await this.client.createValidationEmail(email, validation);
       await this.client.sendValidationEmail(email, 'StackMoxie: Scenario Validation');
 
-      return this.pass(`Validation email was successfully sent to %s`, [email]);
+      return this.pass('Validation email was successfully sent to %s', [email]);
     } catch (e) {
       if (e.response && e.response.data) {
         return this.error('There was a problem sending a validation email: %s', [e.response.data.message]);

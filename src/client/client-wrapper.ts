@@ -39,27 +39,26 @@ export class ClientWrapper {
     const creds: string = `api:${this.auth.get('apiKey').toString()}`;
     this.basicAuth = `Basic ${Buffer.from(creds).toString('base64')}`;
     this.client = clientConstructor;
-    ;
     this.axiosClient = axiosConstructor.create({
       baseURL: `${process.env.baseUrl}/api/v1`,
       timeout: 10000,
-      headers: {}
+      headers: {},
     });
   }
 
   public async getValidationEmail(metadata: any = {}) {
     return new Promise(async (resolve, reject) => {
       try {
-        this.axiosClient.get(`/run/${metadata.scenarioId}/manual-validation`).then(function (response) {
+        this.axiosClient.get(`/run/${metadata.scenarioId}/manual-validation`).then((response) => {
           resolve(response.data);
-        }).catch(function (error) {
+        }).catch((error) => {
           reject(error);
         });
       } catch (e) {
         reject(e);
       }
 
-    })
+    });
   }
 
   public async createValidationEmail(emailAddress: string, testPrompt: string, metadata: any = {}) {
@@ -67,10 +66,10 @@ export class ClientWrapper {
       try {
         this.axiosClient.post(`/run/${metadata.requestorId}/manual-validation`, {
           emailAddress,
-          testPrompt
-        }).then(function (response) {
+          testPrompt,
+        }).then((response) => {
           resolve(response.data);
-        }).catch(function (error) {
+        }).catch((error) => {
           reject(error);
         });
       } catch (e) {
@@ -83,8 +82,8 @@ export class ClientWrapper {
   public async sendValidationEmail(to: string, subject: string, metadata: any = {}) {
     return new Promise(async (resolve, reject) => {
       try {
-        var url = `${process.env.baseUrl}/home/${metadata.requestorId}/manualvalidation/${metadata.scenarioId}`
-        var body = `
+        const url = `${process.env.baseUrl}/home/${metadata.requestorId}/manualvalidation/${metadata.scenarioId}`;
+        const body = `
           Here is the link to validate your scenario:
           <br>
           ${url}
@@ -103,9 +102,9 @@ export class ClientWrapper {
       try {
         const mg = mailgun({ apiKey: this.auth.get('apiKey').toString(), domain: this.auth.get('domain').toString() });
         const emailData = {
+          to,
+          subject,
           from: `StackMoxie <noreply@${this.auth.get('domain').toString()}>`,
-          to: to,
-          subject: subject,
           html: body,
         };
         mg.messages().send(emailData, (error, body) => {
@@ -115,7 +114,7 @@ export class ClientWrapper {
       } catch (e) {
         reject(e.message);
       }
-    })
+    });
   }
 
   public async getInbox(email: string): Promise<Inbox> {
