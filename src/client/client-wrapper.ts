@@ -64,17 +64,12 @@ export class ClientWrapper {
   public async createValidationEmail(emailAddress: string, testPrompt: string) {
     return new Promise(async (resolve, reject) => {
       try {
-        console.log(process.env.BASE_URL);
-        console.log(process.env);
-        console.log(this.idMap);
         this.axiosClient.post(`/run/${this.idMap.scenarioId}/manual-validation`, {
           emailAddress,
           testPrompt,
         }).then((response) => {
-          console.log('Post Manual Validation Response: ', response.data);
           resolve(response.data);
         }).catch((error) => {
-          console.log('Post Manual Validation Error: ', error.message);
           reject(error);
         });
       } catch (e) {
