@@ -40,7 +40,7 @@ export class ClientWrapper {
     this.basicAuth = `Basic ${Buffer.from(creds).toString('base64')}`;
     this.client = clientConstructor;
     this.axiosClient = axiosConstructor.create({
-      baseURL: `${process.env.baseUrl}/api/v1`,
+      baseURL: `${process.env.BASE_URL}/api/v1`,
       timeout: 10000,
       headers: {},
     });
@@ -64,6 +64,7 @@ export class ClientWrapper {
   public async createValidationEmail(emailAddress: string, testPrompt: string) {
     return new Promise(async (resolve, reject) => {
       try {
+        console.log(process.env.BASE_URL);
         console.log(this.idMap);
         this.axiosClient.post(`/run/${this.idMap.scenarioId}/manual-validation`, {
           emailAddress,
@@ -83,7 +84,7 @@ export class ClientWrapper {
   public async sendValidationEmail(to: string, subject: string) {
     return new Promise(async (resolve, reject) => {
       try {
-        const url = `${process.env.baseUrl}/home/${this.idMap.requestorId}/manualvalidation/${this.idMap.scenarioId}`;
+        const url = `${process.env.BASE_URL}/home/${this.idMap.requestorId}/manualvalidation/${this.idMap.scenarioId}`;
         const body = `
           Here is the link to validate your scenario:
           <br>
