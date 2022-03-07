@@ -12,40 +12,34 @@ class CachingClientWrapper {
   }
 
   public async getValidationEmail() {
-    await this.clearCache();
-    return await this.client.getValidationEmail(this.idMap);
+    return await this.client.getValidationEmail();
   }
 
   public async createValidationEmail(emailAddress: string, testPrompt: string) {
-    await this.clearCache();
-    return await this.client.createValidationEmail(emailAddress, testPrompt, this.idMap);
+    return await this.client.createValidationEmail(emailAddress, testPrompt);
   }
 
   public async sendValidationEmail(to: string, subject: string) {
-    await this.client.sendValidationEmail(to, subject, this.idMap);
+    await this.client.sendValidationEmail(to, subject);
   }
 
   public async sendEmail(to: string, subject: string, body: string) {
-    await this.client.sendEmail(to, subject, body, this.idMap);
+    await this.client.sendEmail(to, subject, body);
   }
 
   public async getInbox(email: string): Promise<Inbox> {
-    await this.clearCache();
     return await this.client.getInbox(email);
   }
 
   public async getEmailByStorageUrl(storageUrl: string): Promise<Email> {
-    await this.clearCache();
     return await this.client.getEmailByStorageUrl(storageUrl);
   }
 
   public async getRawMimeMessage(storageUrl: string) {
-    await this.clearCache();
     return await this.client.getRawMimeMessage(storageUrl);
   }
 
   public async evaluateUrls(urls) {
-    await this.clearCache();
     return await this.client.evaluateUrls(urls);
   }
 
