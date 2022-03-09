@@ -103,7 +103,6 @@ export class Cog implements ICogServiceServer {
         requestorId: runStepRequest.getRequestorId(),
       };
 
-      
       client = this.instantiateClient(call.metadata, idMap);
       const step: Step = runStepRequest.getStep();
       const response: RunStepResponse = await this.dispatchStep(step, runStepRequest, call.metadata, client);
@@ -159,7 +158,7 @@ export class Cog implements ICogServiceServer {
     };
 
     console.log(metadata);
-    console.log(idMap)
+    console.log(idMap);
 
     const client = clientWrapper || this.instantiateClient(metadata, idMap);
     const stepId = step.getStepId();
