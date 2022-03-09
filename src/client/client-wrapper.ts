@@ -8,8 +8,8 @@ import { Inbox, Email } from '../models';
 
 const axios = require('axios');
 const formData = require('form-data');
-const Mailgun = require('mailgun.js');
-const mailgun = new Mailgun(formData)
+const mailgunConstructor = require('mailgun.js');
+const mailgun = new mailgunConstructor(formData);
 export class ClientWrapper {
   public static expectedAuthFields: Field[] = [{
     field: 'apiKey',
@@ -103,14 +103,14 @@ export class ClientWrapper {
     return new Promise(async (resolve, reject) => {
       try {
         // const mg = mailgun({ apiKey: this.auth.get('apiKey').toString(), domain: this.auth.get('domain').toString() });
-        const mg = mailgun.client({username: 'api', key: this.auth.get('apiKey').toString()});
+        const mg = mailgun.client({ username: 'api', key: this.auth.get('apiKey').toString() });
         const emailData = {
           to,
           subject,
           from: `StackMoxie <noreply@${this.auth.get('domain').toString()}>`,
           html: body,
         };
-        mg.messages.create(this.auth.get('domain').toString(), emailData).then(response => {
+        mg.messages.create(this.auth.get('domain').toString(), emailData).then((response) => {
           console.log(response);
         });
         resolve(null);
