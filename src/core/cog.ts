@@ -1,51 +1,23 @@
 import * as grpc from 'grpc';
 import { Struct, Value } from 'google-protobuf/google/protobuf/struct_pb';
 import * as fs from 'fs';
-import * as redis from 'redis';
-import * as mailgun from 'mailgun-js';
 
 import { Field, StepInterface } from './base-step';
 
+import { ClientWrapper } from '../client/client-wrapper';
 import { ICogServiceServer } from '../proto/cog_grpc_pb';
 import { ManifestRequest, CogManifest, Step, RunStepRequest, RunStepResponse, FieldDefinition,
   StepDefinition } from '../proto/cog_pb';
-import { ClientWrapper } from '../client/client-wrapper';
 
 export class Cog implements ICogServiceServer {
 
   private steps: StepInterface[];
-  private redisClient: any;
 
-  constructor (private clientWrapperClass, private stepMap: Record<string, any> = {}, private redisUrl: string = undefined, private mailgunCredentials: Record<string, any> = {}) {
+  constructor (private clientWrapperClass, private stepMap: Record<string, any> = {}, private mailgunCredentials: Record<string, any> = {}) {
+    // Dynamically reads the contents of the ./steps folder for step definitions and makes the
+    // corresponding step classes available on this.steps and this.stepMap.
+    // tslint:disable-next-line:max-line-length
     this.steps = [].concat(...Object.values(this.getSteps(`${__dirname}/../steps`, clientWrapperClass)));
-    this.redisClient = null;
-    if (this.redisUrl) {
-      const c = redis.createClient(this.redisUrl);
-      let emailSent = false;
-      // Set the "client" variable to the actual redis client instance
-      // once a connection is established with the Redis server
-      c.on('ready', () => {
-        this.redisClient = c;
-      });
-      // Handle the error event so that it doesn't crash
-      c.on('error', () => {
-        // Send an email if a bad redisUrl is passed
-        if (this.mailgunCredentials.apiKey && this.mailgunCredentials.domain && this.mailgunCredentials.alertEmail && !emailSent) {
-          const mg = mailgun({ apiKey: this.mailgunCredentials.apiKey, domain: this.mailgunCredentials.domain });
-          const emailData = {
-            from: `Salesforce Cog <noreply@${this.mailgunCredentials.domain}>`,
-            to: this.mailgunCredentials.alertEmail,
-            subject: 'Broken Redis Url in Salesforce Cog',
-            text: 'The redis url in the Salesforce Cog is no longer working. Caching is disabled for the Salesforce Cog.',
-          };
-          mg.messages().send(emailData, (error, body) => {
-            console.log('email sent: ', body);
-          });
-          // Set emailSent to true so we don't send duplicate emails on multiple errors
-          emailSent = true;
-        }
-      });
-    }
   }
 
   private getSteps(dir: string, clientWrapperClass) {
@@ -66,6 +38,11 @@ export class Cog implements ICogServiceServer {
     return steps.filter(s => s !== undefined);
   }
 
+  /**
+   * Implements the cog:getManifest grpc method, responding with a manifest definition, including
+   * details like the name of the cog, the version of the cog, any definitions for required
+   * authentication fields, and step definitions.
+   */
   getManifest(
     call: grpc.ServerUnaryCall<ManifestRequest>,
     callback: grpc.sendUnaryData<CogManifest>,
@@ -96,40 +73,46 @@ export class Cog implements ICogServiceServer {
       authField.setOptionality(FieldDefinition.Optionality.REQUIRED);
       authField.setType(field.type);
       authField.setDescription(field.description);
+      if (field.help) {
+        authField.setHelp(field.help);
+      }
       manifest.addAuthFields(authField);
     });
 
     callback(null, manifest);
   }
 
+  /**
+   * Implements the cog:runSteps grpc method, responding to a stream of RunStepRequests and
+   * responding in kind with a stream of RunStepResponses. This method makes no guarantee that the
+   * order of step responses sent corresponds at all with the order of step requests received.
+   */
   runSteps(call: grpc.ServerDuplexStream<RunStepRequest, RunStepResponse>) {
+    // Instantiate a single client for all step requests.
+    let client = null;
     let processing = 0;
     let clientEnded = false;
-    let client: any = null;
     let idMap: any = null;
-    let clientCreated = false;
 
     call.on('data', async (runStepRequest: RunStepRequest) => {
       processing = processing + 1;
 
-      if (!clientCreated) {
-        idMap = {
-          requestId: runStepRequest.getRequestId(),
-          scenarioId: runStepRequest.getScenarioId(),
-          requestorId: runStepRequest.getRequestorId(),
-        };
-        client = await this.getClientWrapper(call.metadata, idMap);
-        clientCreated = true;
-      }
+      idMap = {
+        requestId: runStepRequest.getRequestId(),
+        scenarioId: runStepRequest.getScenarioId(),
+        requestorId: runStepRequest.getRequestorId(),
+      };
 
+      
+      client = this.instantiateClient(call.metadata, idMap);
       const step: Step = runStepRequest.getStep();
       const response: RunStepResponse = await this.dispatchStep(step, runStepRequest, call.metadata, client);
       call.write(response);
 
       processing = processing - 1;
 
-      // If this was the last step to process and the client has ended the
-      // stream, then end our stream as well.
+      // If this was the last step to process and the client has ended the stream, then end our
+      // stream as well.
       if (processing === 0 && clientEnded) {
         call.end();
       }
@@ -145,6 +128,10 @@ export class Cog implements ICogServiceServer {
     });
   }
 
+  /**
+   * Implements the cog:runStep grpc method, responding to a single RunStepRequest with a single
+   * RunStepResponse.
+   */
   async runStep(
     call: grpc.ServerUnaryCall<RunStepRequest>,
     callback: grpc.sendUnaryData<RunStepResponse>,
@@ -154,24 +141,27 @@ export class Cog implements ICogServiceServer {
     callback(null, response);
   }
 
+  /**
+   * Helper method to dispatch a given step to its corresponding step class and handle error
+   * scenarios. Always resolves to a RunStepResponse, regardless of any underlying errors.
+   */
   private async dispatchStep(
     step: Step,
     runStepRequest: RunStepRequest,
     metadata: grpc.Metadata,
-    client = null,
+    clientWrapper: ClientWrapper = null,
   ): Promise<RunStepResponse> {
+    // Use the provided client wrapper if given, or instantiate a new one.
+    const idMap = {
+      requestId: runStepRequest.getRequestId(),
+      scenarioId: runStepRequest.getScenarioId(),
+      requestorId: runStepRequest.getRequestorId(),
+    };
 
-    let wrapper = client;
-    if (!client) {
-      // Get scoped IDs for building cache keys
-      const idMap: {} = {
-        requestId: runStepRequest.getRequestId(),
-        scenarioId: runStepRequest.getScenarioId(),
-        requestorId: runStepRequest.getRequestorId(),
-      };
-      wrapper = this.getClientWrapper(metadata, idMap);
-    }
+    console.log(metadata);
+    console.log(idMap)
 
+    const client = clientWrapper || this.instantiateClient(metadata, idMap);
     const stepId = step.getStepId();
     let response: RunStepResponse = new RunStepResponse();
 
@@ -183,7 +173,7 @@ export class Cog implements ICogServiceServer {
     }
 
     try {
-      const stepExecutor: StepInterface = new this.stepMap[stepId](wrapper);
+      const stepExecutor: StepInterface = new this.stepMap[stepId](client);
       response = await stepExecutor.executeStep(step);
     } catch (e) {
       response.setOutcome(RunStepResponse.Outcome.ERROR);
@@ -193,12 +183,11 @@ export class Cog implements ICogServiceServer {
     return response;
   }
 
-  private getClientWrapper(auth: grpc.Metadata, idMap: {} = null) {
-    if (this.redisClient) {
-      const client = new ClientWrapper(auth, idMap);
-      return new this.clientWrapperClass(client, this.redisClient, idMap);
-    }
-
-    return new ClientWrapper(auth, idMap);
+  /**
+   * Helper method to instantiate an API client wrapper for this Cog.
+   */
+  private instantiateClient(auth: grpc.Metadata, idMap: any): ClientWrapper {
+    return new this.clientWrapperClass(auth, idMap);
   }
+
 }
