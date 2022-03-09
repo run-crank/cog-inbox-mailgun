@@ -1,13 +1,15 @@
 import * as grpc from 'grpc';
 import * as https from 'https';
 import * as RequestPromise from 'request-promise';
-import * as mailgun from 'mailgun-js';
 
 import { Field } from '../core/base-step';
 import { FieldDefinition } from '../proto/cog_pb';
 import { Inbox, Email } from '../models';
 
 const axios = require('axios');
+const formData = require('form-data');
+const mailgunConstructor = require('mailgun.js');
+const mailgun = new mailgunConstructor(formData);
 export class ClientWrapper {
   public static expectedAuthFields: Field[] = [{
     field: 'apiKey',
@@ -30,8 +32,8 @@ export class ClientWrapper {
   private auth: grpc.Metadata;
   private basicAuth: string;
   private client: any;
-  private axiosClient: any;
   private request: RequestPromise.RequestPromiseAPI;
+  private axiosClient: any;
 
   constructor(auth: grpc.Metadata,  public idMap: any, clientConstructor = https, request = RequestPromise, axiosConstructor = axios) {
     this.auth = auth;
@@ -100,15 +102,16 @@ export class ClientWrapper {
   public async sendEmail(to: string, subject: string, body: string) {
     return new Promise(async (resolve, reject) => {
       try {
-        const mg = mailgun({ apiKey: this.auth.get('apiKey').toString(), domain: this.auth.get('domain').toString() });
+        // const mg = mailgun({ apiKey: this.auth.get('apiKey').toString(), domain: this.auth.get('domain').toString() });
+        const mg = mailgun.client({ username: 'api', key: this.auth.get('apiKey').toString() });
         const emailData = {
           to,
           subject,
           from: `StackMoxie <noreply@${this.auth.get('domain').toString()}>`,
           html: body,
         };
-        mg.messages().send(emailData, (error, body) => {
-          console.log('email sent: ', body);
+        mg.messages.create(this.auth.get('domain').toString(), emailData).then((response) => {
+          console.log(response);
         });
         resolve(null);
       } catch (e) {
