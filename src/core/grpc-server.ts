@@ -1,7 +1,7 @@
 import * as grpc from 'grpc';
 import { CogServiceService as CogService } from '../proto/cog_grpc_pb';
 import { Cog } from './cog';
-import { CachingClientWrapper } from '../client/caching-client-wrapper';
+import { ClientWrapper } from '../client/client-wrapper';
 
 const server = new grpc.Server();
 const port = process.env.PORT || 28866;
@@ -33,7 +33,7 @@ if (mailgunApiKey && mailgunDomain && mailgunAlertEmail) {
   };
 }
 
-server.addService(CogService, new Cog(CachingClientWrapper, {}, redisUrl, mailgunCredentials));
+server.addService(CogService, new Cog(ClientWrapper, {}, mailgunCredentials));
 server.bind(`${host}:${port}`, credentials);
 server.start();
 console.log(`Server started, listening: ${host}:${port}`);
