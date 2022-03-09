@@ -38,34 +38,96 @@ describe('Cog:GetManifest', () => {
         return field.toObject();
       });
 
-      // Useragent auth field
-      const ua = authFields.find(a => a.key === 'apiKey');
-      expect(ua.type).to.equal(FieldDefinition.Type.STRING);
-      expect(ua.optionality).to.equal(FieldDefinition.Optionality.REQUIRED);
+      // Client ID auth field
+      const cid: any = authFields.filter(a => a.key === 'apiKey')[0];
+      expect(cid.type).to.equal(FieldDefinition.Type.STRING);
+      expect(cid.optionality).to.equal(FieldDefinition.Optionality.REQUIRED);
 
-      const domain = authFields.find(a => a.key === 'domain');
-      expect(domain.type).to.equal(FieldDefinition.Type.STRING);
-      expect(domain.optionality).to.equal(FieldDefinition.Optionality.REQUIRED);
+      // Token Key auth field
+      const tKey: any = authFields.filter(a => a.key === 'domain')[0];
+      expect(tKey.type).to.equal(FieldDefinition.Type.STRING);
+      expect(tKey.optionality).to.equal(FieldDefinition.Optionality.REQUIRED);
 
-      const endpoint = authFields.find(a => a.key === 'endpoint');
-      expect(endpoint.type).to.equal(FieldDefinition.Type.STRING);
-      expect(endpoint.optionality).to.equal(FieldDefinition.Optionality.REQUIRED);
-
-      done();
-    });
-  });
-
-  it('should return expected step definitions', (done) => {
-    cogUnderTest.getManifest(null, (err, manifest: CogManifest) => {
-      const stepDefs: StepDefinition[] = manifest.getStepDefinitionsList();
-
-      // Test for the presence of step definitions in your manifest like this:
-      // const someStepExists: boolean = stepDefs.filter(s => s.getStepId() === 'SomeStepClass').length === 1;
-      // expect(someStepExists).to.equal(true);
+      // Token Secret auth field
+      const tSecret: any = authFields.filter(a => a.key === 'endpoint')[0];
+      expect(tSecret.type).to.equal(FieldDefinition.Type.STRING);
+      expect(tSecret.optionality).to.equal(FieldDefinition.Optionality.REQUIRED);
 
       done();
     });
   });
+});
+
+describe('Cog:RunStep', () => {
+  const expect = chai.expect;
+  let protoStep: ProtoStep;
+  let grpcUnaryCall: any = {};
+  let cogUnderTest: Cog;
+  let clientWrapperStub: any;
+
+  beforeEach(() => {
+    protoStep = new ProtoStep();
+    grpcUnaryCall.request = {
+      getStep: function () {return protoStep},
+      metadata: null
+    };
+    clientWrapperStub = sinon.stub();
+    cogUnderTest = new Cog(clientWrapperStub);
+  });
+
+  // it('authenticates client wrapper with call metadata', (done) => {
+  //   // Construct grpc metadata and assert the client was authenticated.
+  //   grpcUnaryCall.metadata = new Metadata();
+  //   grpcUnaryCall.metadata.add('anythingReally', 'some-value');
+
+  //   cogUnderTest.runStep(grpcUnaryCall, (err, response: RunStepResponse) => {
+  //     expect(clientWrapperStub).to.have.been.calledWith(grpcUnaryCall.metadata);
+  //     done();
+  //   })
+  // });
+
+  // it('responds with error when called with unknown stepId', (done) => {
+  //   protoStep.setStepId('NotRealStep');
+
+  //   cogUnderTest.runStep(grpcUnaryCall, (err, response: RunStepResponse) => {
+  //     expect(response.getOutcome()).to.equal(RunStepResponse.Outcome.ERROR);
+  //     expect(response.getMessageFormat()).to.equal('Unknown step %s');
+  //     done();
+  //   });
+  // });
+
+  // it('invokes step class as expected', (done) => {
+  //   const expectedResponse = new RunStepResponse();
+  //   const mockStepExecutor: any = {executeStep: sinon.stub()}
+  //   mockStepExecutor.executeStep.resolves(expectedResponse);
+  //   const mockTestStepMap: any = {TestStepId: sinon.stub()}
+  //   mockTestStepMap.TestStepId.returns(mockStepExecutor);
+
+  //   cogUnderTest = new Cog(clientWrapperStub, mockTestStepMap);
+  //   protoStep.setStepId('TestStepId');
+
+  //   cogUnderTest.runStep(grpcUnaryCall, (err, response: RunStepResponse) => {
+  //     expect(mockTestStepMap.TestStepId).to.have.been.calledOnce;
+  //     expect(mockStepExecutor.executeStep).to.have.been.calledWith(protoStep);
+  //     expect(response).to.deep.equal(expectedResponse);
+  //     done();
+  //   });
+  // });
+
+  // it('responds with error when step class throws an exception', (done) => {
+  //   const mockStepExecutor: any = {executeStep: sinon.stub()}
+  //   mockStepExecutor.executeStep.throws()
+  //   const mockTestStepMap: any = {TestStepId: sinon.stub()}
+  //   mockTestStepMap.TestStepId.returns(mockStepExecutor);
+
+  //   cogUnderTest = new Cog(clientWrapperStub, mockTestStepMap);
+  //   protoStep.setStepId('TestStepId');
+
+  //   cogUnderTest.runStep(grpcUnaryCall, (err, response: RunStepResponse) => {
+  //     expect(response.getOutcome()).to.equal(RunStepResponse.Outcome.ERROR);
+  //     done();
+  //   });
+  // });
 
 });
 
@@ -85,20 +147,23 @@ describe('Cog:RunSteps', () => {
     grpcDuplexStream._read = sinon.stub();
     grpcDuplexStream.metadata = new Metadata();
     clientWrapperStub = sinon.stub();
-    clientWrapperStub.Connection = sinon.stub();
     cogUnderTest = new Cog(clientWrapperStub);
   });
 
-  it('bypasses caching with bad redisUrl', () => {
-    runStepRequest.setStep(protoStep);
+//   it('authenticates client wrapper with call metadata', () => {
+//     runStepRequest.setStep(protoStep);
 
-    // Construct grpc metadata and assert the client was authenticated.
-    grpcDuplexStream.metadata.add('anythingReally', 'some-value');
+//     // Construct grpc metadata and assert the client was authenticated.
+//     grpcDuplexStream.metadata.add('anythingReally', 'some-value');
 
-    cogUnderTest.runSteps(grpcDuplexStream);
-    grpcDuplexStream.emit('data', runStepRequest);
-    expect(clientWrapperStub).to.have.not.been.called;
-  });
+//     cogUnderTest.runSteps(grpcDuplexStream);
+//     grpcDuplexStream.emit('data', runStepRequest);
+//     expect(clientWrapperStub).to.have.been.calledWith(grpcDuplexStream.metadata);
+
+//     // Does not attempt to reinstantiate client.
+//     grpcDuplexStream.emit('data', runStepRequest);
+//     return expect(clientWrapperStub).to.have.been.calledOnce;
+// });
 
   it('responds with error when called with unknown stepId', (done) => {
     // Construct step request
