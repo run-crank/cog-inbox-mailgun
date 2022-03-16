@@ -16,13 +16,13 @@ export class CheckValidationEmailStep extends BaseStep implements StepInterface 
       const validationEmail = await this.client.getValidationEmail();
 
       if (validationEmail.testApproved === null) {
-        return this.fail('There was no response recieved from %s', [validationEmail.emailAddress]);
+        return this.error('There was no response recieved from %s', [validationEmail.emailAddress]);
       }
 
       if (validationEmail.testApproved) {
         return this.pass('Validation email was evaluated as passing by %s', [validationEmail.emailAddress]);
       } else {
-        return this.pass('Validation email was evaluated as failed by %s', [validationEmail.emailAddress]);
+        return this.fail('Validation email was evaluated as failed by %s', [validationEmail.emailAddress]);
       }
     } catch (e) {
       return this.error('There was a problem retrieving validation response: %s', [e.toString()]);
