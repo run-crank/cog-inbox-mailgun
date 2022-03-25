@@ -83,8 +83,9 @@ export class ClientWrapper {
 
   public async sendValidationEmail(to: string, subject: string) {
     return new Promise(async (resolve, reject) => {
+      const baseUrl = process.env.BASE_URL === 'https://api.automatoninc.com/v1' ? 'https://app.stackmoxie.com' : process.env.BASE_URL.split('/api/v1')[0];
       try {
-        const url = `${process.env.BASE_URL}/home/${this.idMap.requestorId}/manualvalidation/${this.idMap.scenarioId}`;
+        const url = `${baseUrl}/home/${this.idMap.requestorId}/manualvalidation/${this.idMap.scenarioId}`;
         const body = `
           Here is the link to validate your scenario:
           <br>
