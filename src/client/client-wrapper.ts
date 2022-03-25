@@ -42,7 +42,7 @@ export class ClientWrapper {
     this.basicAuth = `Basic ${Buffer.from(creds).toString('base64')}`;
     this.client = clientConstructor;
     this.axiosClient = axiosConstructor.create({
-      baseURL: `${process.env.BASE_URL}/api/v1`,
+      baseURL: process.env.BASE_URL,
       timeout: 10000,
       headers: {},
     });
