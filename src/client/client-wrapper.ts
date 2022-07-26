@@ -220,7 +220,7 @@ export class ClientWrapper {
               });
               resolve(response);
             }).catch((err) => {
-              // Handle unconventional redirects
+              // Handle unconventional redirects (Most 302 redirects are already handled without throwing an error)
               if (err.statusCode && err.statusCode === 302) {
                 // Check for javascript redirects
                 if (err.response && err.response.body && err.response.body.includes('window.self.location = ')) {
@@ -236,6 +236,17 @@ export class ClientWrapper {
                         type: 'HTML',
                       });
                     }
+                  } else {
+                    brokenUrls.push({
+                      url: err.response && err.response.request
+                        ? err.response.request.uri.href : url.url,
+                      message: err.statusCode ? `Status code: ${err.statusCode}` : 'No response received',
+                      type: url.type,
+                      statusCode: err.statusCode ? err.statusCode : 'No response received',
+                      finalUrl: err.response && err.response.request
+                        ? err.response.request.uri.href : url.url,
+                      order: url.order,
+                    });
                   }
                 } else if (err.response && err.response.body && err.response.body.includes('404 Not Found') && err.response.body.includes('The redirect url is empty')) {
                   // Handle case where a marketo redirects to a 404
