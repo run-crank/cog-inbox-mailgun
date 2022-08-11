@@ -2,4 +2,4 @@ scenario: Email has broken links
 description: Check if an email has broken links
 
 steps:
-- step: the 3rd mailgun email for 50bac587-4c1d-46b5-8dd6-f396a0d64125@thisisjust.atomatest.com should not contain broken links
+- step: the 1st mailgun email for ea29ed2c-8596-4e88-900a-c404478c25d5@thisisjust.atomatest.com should not contain broken links
