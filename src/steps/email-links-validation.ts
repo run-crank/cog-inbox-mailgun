@@ -135,11 +135,11 @@ export class EmailLinksValidationStep extends BaseStep implements StepInterface 
       // Evaluate every URLs to check which are broken
       const response = await this.client.evaluateUrls(sanitizedUrls);
 
-      // Ignore URLs with /track?mktoTestLink in Email Link Validation. It is used to determine which email opens are from BOTs. 
+      // Ignore URLs with /track?mktoTestLink in Email Link Validation. It is used to determine which email opens are from BOTs.
       // Let's suppress it from being displayed in the results of a scenario log.
       response.brokenUrls = response.brokenUrls.filter(url => !url.url.includes('/track?mktoTestLink'));
       response.workingUrls = response.workingUrls.filter(url => !url.url.includes('/track?mktoTestLink'));
-      
+
       // Join all URLs and order them as found initially from the email.
       const allUrls = response.brokenUrls.concat(response.workingUrls)
         .sort((a, b) => a.order - b.order);
@@ -176,9 +176,9 @@ export class EmailLinksValidationStep extends BaseStep implements StepInterface 
   private extractUrlsFromHtmlBody(htmlBody: string): any[] {
     const dom = new DOMParser({
       errorHandler: {
-        warning: () => {},
-        error: () => {},
-        fatalError: () => {},
+        warning: () => { },
+        error: () => { },
+        fatalError: () => { },
       },
     }).parseFromString(htmlBody);
 
@@ -261,7 +261,7 @@ export class EmailLinksValidationStep extends BaseStep implements StepInterface 
       Type: 'Type',
       Url: 'URL',
       StatusCode:
-      'StatusCode',
+        'StatusCode',
       FinalUrl: 'FinalUrl',
     };
     return this.table('links', 'Found Links', headers, records);
