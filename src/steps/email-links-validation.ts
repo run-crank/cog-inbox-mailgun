@@ -137,8 +137,8 @@ export class EmailLinksValidationStep extends BaseStep implements StepInterface 
 
       // Ignore URLs with /track?mktoTestLink in Email Link Validation. It is used to determine which email opens are from BOTs.
       // Let's suppress it from being displayed in the results of a scenario log.
-      response.brokenUrls = response.brokenUrls.filter(url => !url.url.includes('/track?mktoTestLink') || !url.url.includes('tel:')); // Exclude telephone numbers;
-      response.workingUrls = response.workingUrls.filter(url => !url.url.includes('/track?mktoTestLink') || !url.url.includes('tel:'));
+      response.brokenUrls = response.brokenUrls.filter(url => !url.url.includes('/track?mktoTestLink') && !url.url.includes('tel:')); // Exclude telephone numbers;
+      response.workingUrls = response.workingUrls.filter(url => !url.url.includes('/track?mktoTestLink') && !url.url.includes('tel:'));
 
       // Join all URLs and order them as found initially from the email.
       const allUrls = response.brokenUrls.concat(response.workingUrls)
