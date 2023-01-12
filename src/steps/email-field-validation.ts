@@ -9,6 +9,8 @@ export class EmailFieldValidationStep extends BaseStep implements StepInterface 
   // tslint:disable-next-line:max-line-length
   protected stepExpression: string = 'the (?<field>(subject|body-html|body-plain|from)) of the (?<position>\\d+)(?:(st|nd|rd|th))? mailgun email for (?<email>[^\\s]+) (?<operator>(should contain|should not contain|should be)) (?<expectation>.+)';
   protected stepType: StepDefinition.Type = StepDefinition.Type.VALIDATION;
+  protected actionList: string[] = ['check'];
+  protected targetObject: string = 'Email Content';
   protected expectedFields: Field[] = [{
     field: 'email',
     type: FieldDefinition.Type.EMAIL,

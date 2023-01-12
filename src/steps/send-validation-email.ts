@@ -8,6 +8,8 @@ export class SendValidationEmailStep extends BaseStep implements StepInterface {
   // tslint:disable-next-line:max-line-length
   protected stepExpression: string = 'Send a validation email to (?<email>[^\\s]+)';
   protected stepType: StepDefinition.Type = StepDefinition.Type.ACTION;
+  protected actionList: string[] = ['send'];
+  protected targetObject: string = 'Validation Email';
   protected expectedFields: Field[] = [{
     field: 'email',
     type: FieldDefinition.Type.EMAIL,

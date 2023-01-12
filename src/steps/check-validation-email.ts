@@ -8,6 +8,8 @@ export class CheckValidationEmailStep extends BaseStep implements StepInterface 
   // tslint:disable-next-line:max-line-length
   protected stepExpression: string = 'Check validation email';
   protected stepType: StepDefinition.Type = StepDefinition.Type.VALIDATION;
+  protected actionList: string[] = ['check'];
+  protected targetObject: string = 'Validation Email';
   protected expectedFields: Field[] = [];
   protected expectedRecords: ExpectedRecord[] = [];
 

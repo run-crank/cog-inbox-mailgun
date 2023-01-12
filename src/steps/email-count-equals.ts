@@ -10,6 +10,8 @@ export class EmailCountEqualsStep extends BaseStep implements StepInterface {
   // tslint:disable-next-line:max-line-length
   protected stepExpression: string = 'there should be (?<count>\\d+) emails? in mailgun for (?<email>.+)';
   protected stepType: StepDefinition.Type = StepDefinition.Type.VALIDATION;
+  protected actionList: string[] = ['check'];
+  protected targetObject: string = 'Email Count';
   protected expectedFields: Field[] = [{
     field: 'email',
     type: FieldDefinition.Type.EMAIL,
