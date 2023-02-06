@@ -12,14 +12,6 @@ export class EmailFieldValidationStep extends BaseStep implements StepInterface 
   protected actionList: string[] = ['check'];
   protected targetObject: string = 'Email Content';
   protected expectedFields: Field[] = [{
-    field: 'email',
-    type: FieldDefinition.Type.EMAIL,
-    description: 'The inbox\'s email address',
-  }, {
-    field: 'position',
-    type: FieldDefinition.Type.NUMERIC,
-    description: 'The nth message to check from the email\'s inbox',
-  }, {
     field: 'field',
     type: FieldDefinition.Type.STRING,
     description: 'Field name to check',
@@ -31,6 +23,14 @@ export class EmailFieldValidationStep extends BaseStep implements StepInterface 
     field: 'expectation',
     type: FieldDefinition.Type.ANYSCALAR,
     description: 'Expected field value',
+  }, {
+    field: 'position',
+    type: FieldDefinition.Type.NUMERIC,
+    description: 'The nth message to check from the email\'s inbox',
+  }, {
+    field: 'email',
+    type: FieldDefinition.Type.EMAIL,
+    description: 'The inbox\'s email address',
   }];
   protected expectedRecords: ExpectedRecord[] = [{
     id: 'eml',
