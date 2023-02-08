@@ -9,7 +9,7 @@ export class SendValidationEmailStep extends BaseStep implements StepInterface {
   protected stepExpression: string = 'Send a validation email to (?<email>[^\\s]+)';
   protected stepType: StepDefinition.Type = StepDefinition.Type.ACTION;
   protected actionList: string[] = ['send'];
-  protected targetObject: string = 'Validation Email';
+  protected targetObject: string = 'Human Approval Email';
   protected expectedFields: Field[] = [{
     field: 'email',
     type: FieldDefinition.Type.EMAIL,

@@ -9,7 +9,7 @@ export class CheckValidationEmailStep extends BaseStep implements StepInterface 
   protected stepExpression: string = 'Check validation email';
   protected stepType: StepDefinition.Type = StepDefinition.Type.VALIDATION;
   protected actionList: string[] = ['check'];
-  protected targetObject: string = 'Validation Email';
+  protected targetObject: string = 'Human Approval';
   protected expectedFields: Field[] = [];
   protected expectedRecords: ExpectedRecord[] = [];
 
