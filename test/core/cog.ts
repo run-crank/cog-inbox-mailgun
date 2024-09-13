@@ -25,7 +25,7 @@ describe('Cog:GetManifest', () => {
   it('should return expected cog metadata', (done) => {
     const version: string = JSON.parse(fs.readFileSync('package.json').toString('utf8')).version;
     cogUnderTest.getManifest(null, (err, manifest: CogManifest) => {
-      expect(manifest.getName()).to.equal('automatoninc/inbox-mailgun');
+      expect(manifest.getName()).to.equal('stackmoxie/inbox-mailgun');
       expect(manifest.getLabel()).to.equal('Inbox (Mailgun)');
       expect(manifest.getVersion()).to.equal(version);
       done();

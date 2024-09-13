@@ -13,8 +13,8 @@
 # In order for Docker publishing to work, you will need to do the following:
 #
 # - Set up a Circle CI context called `docker-creds-to-publish-cogs`
-# - In this context, add `DOCKERHUB_USERNAME` and `DOCKERHUB_PASS` environment
-#   variables, using credentials that can push to `automatoninc/inbox-mailgun`
+# - In this context, add `DOCKERHUB_SM_USERNAME` and `DOCKERHUB_PASS` environment
+#   variables, using credentials that can push to `stackmoxie/inbox-mailgun`
 #
 # @see https://circleci.com/docs/2.0/contexts/
 ##
@@ -23,7 +23,7 @@ version: 2.1
 executors:
   docker-publisher:
     environment:
-      IMAGE_NAME: automatoninc/inbox-mailgun
+      IMAGE_NAME: stackmoxie/inbox-mailgun
     docker:
       - image: circleci/buildpack-deps:stretch
 
@@ -85,7 +85,7 @@ jobs:
       - run:
           name: Publish Docker Image to Docker Hub
           command: |
-            echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
+            echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_SM_USERNAME" --password-stdin
             IMAGE_TAG="dev-v${CIRCLE_BUILD_NUM}"
             docker tag $IMAGE_NAME:latest $IMAGE_NAME:$IMAGE_TAG
             docker push $IMAGE_NAME:$IMAGE_TAG
@@ -101,7 +101,7 @@ jobs:
       - run:
           name: Publish Docker Image to Docker Hub
           command: |
-            echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
+            echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_SM_USERNAME" --password-stdin
             IMAGE_TAG=${CIRCLE_TAG/v/''}
             docker tag $IMAGE_NAME:latest $IMAGE_NAME:$IMAGE_TAG
             docker push $IMAGE_NAME:latest

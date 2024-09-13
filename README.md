@@ -24,7 +24,7 @@ then run the following.  You'll be prompted to enter your Mailgun API
 credentials once the Cog is successfully installed.
 
 ```shell-session
-$ crank cog:install automatoninc/inbox-mailgun --ignore-auth
+$ crank cog:install stackmoxie/inbox-mailgun --ignore-auth
 ```
 
 ## Setup
@@ -62,7 +62,7 @@ message in your Mailgun dashboard under `Sending -> Logs`.
 Finally, return to your CLI to authenticate the Cog:
 
 ```shell-session
-$ crank cog:auth automatoninc/inbox-mailgun
+$ crank cog:auth stackmoxie/inbox-mailgun
 ```
 
 For details on where to find authentication information, see the Authentication
@@ -72,7 +72,7 @@ section below.
 
 ### Authentication
 
-<!-- run `crank cog:readme automatoninc/inbox-mailgun` to update -->
+<!-- run `crank cog:readme stackmoxie/inbox-mailgun` to update -->
 <!-- authenticationDetails -->
 You will be asked for the following authentication details on installation. To avoid prompts in a CI/CD context, you can provide the same details as environment variables.
 
@@ -84,7 +84,7 @@ You will be asked for the following authentication details on installation. To a
 
 ```shell-session
 # Re-authenticate by running this
-$ crank cog:auth automatoninc/inbox-mailgun
+$ crank cog:auth stackmoxie/inbox-mailgun
 ```
 <!-- authenticationDetailsEnd -->
 
@@ -100,7 +100,7 @@ Note:
 Once installed, the following steps will be available for use in any of your
 Scenario files.
 
-<!-- run `crank cog:readme automatoninc/inbox-mailgun` to update -->
+<!-- run `crank cog:readme stackmoxie/inbox-mailgun` to update -->
 <!-- stepDetails -->
 | Name (ID) | Expression | Expected Data |
 | --- | --- | --- |
@@ -122,12 +122,12 @@ as appropriate.
 4. Run `npm start` to validate the Cog works locally (`ctrl+c` to kill it)
 5. Run `crank cog:install --source=local --local-start-command="npm start"` to
    register your local instance of this Cog. You may need to append a `--force`
-   flag or run `crank cog:uninstall automatoninc/inbox-mailgun` if you've already
+   flag or run `crank cog:uninstall stackmoxie/inbox-mailgun` if you've already
    installed the distributed version of this Cog.
 
 ### Adding/Modifying Steps
 Modify code in `src/steps` and validate your changes by running
-`crank cog:step automatoninc/inbox-mailgun` and selecting your step.
+`crank cog:step stackmoxie/inbox-mailgun` and selecting your step.
 
 To add new steps, create new step classes in `src/steps`. Use existing steps as
 a starting point for your new step(s). Note that you will need to run
@@ -148,7 +148,7 @@ Modify the ClientWrapper class at `src/client/client-wrapper.ts`.
 
 Note that you will need to run `crank registry:rebuild` in order for any
 changes to authentication fields to be reflected. Afterward, you can
-re-authenticate this Cog by running `crank cog:auth automatoninc/inbox-mailgun`
+re-authenticate this Cog by running `crank cog:auth stackmoxie/inbox-mailgun`
 
 ### Tests and Housekeeping
 Tests can be found in the `test` directory and run like this: `npm test`.
