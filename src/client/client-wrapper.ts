@@ -1,6 +1,7 @@
 import * as grpc from 'grpc';
 import * as https from 'https';
 import * as RequestPromise from 'request-promise';
+import { parse as parseCsvString } from 'csv-string';
 
 import { Field } from '../core/base-step';
 import { FieldDefinition } from '../proto/cog_pb';
@@ -188,15 +189,20 @@ export class ClientWrapper {
     });
   }
 
-  public async evaluateUrls(urls) {
+  public async evaluateUrls(urls, passOnCodes = '') {
     const brokenUrls = [];
     const workingUrls = [];
     const redirectUrls = [];
+    const userAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) AutomatonChrome/91.0.4472.124 Safari/537.36';
 
     const checkUrls = async (urls) => {
       await Promise.all(urls.map((url) => {
         return new Promise((resolve) => {
-          this.request.get({ url: url.url, jar: true })
+          this.request.get({
+            url: url.url,
+            jar: true,
+            headers: { 'User-Agent': userAgent },
+          })
             .then((response) => {
               // The following code will check for redirect urls from marketo forms
               if (response.includes('var redirecturl') && response.includes('window.self.location = redirecturl') && response.includes('function redirect() {')) {
@@ -220,8 +226,19 @@ export class ClientWrapper {
               });
               resolve(response);
             }).catch((err) => {
-              // Handle unconventional redirects (Most 302 redirects are already handled without throwing an error)
-              if (err.statusCode && err.statusCode === 302) {
+              if (passOnCodes && err.statusCode && !!parseCsvString(passOnCodes)[0].map(v => v.trim()).includes(err.statusCode.toString())) {
+                // If this is an acceptable error code, then add this to the working urls
+                workingUrls.push({
+                  url: err.response && err.response.request
+                    ? err.response.request.uri.href : url.url,
+                  message: `Status code: ${err.statusCode}`,
+                  type: url.type,
+                  statusCode: err.statusCode,
+                  finalUrl: err.response && err.response.request
+                    ? err.response.request.uri.href : url.url,
+                  order: url.order,
+                });
+              } else if (err.statusCode && err.statusCode === 302) { // Handle unconventional redirects (Most 302 redirects are already handled without throwing an error)
                 // Check for javascript redirects
                 if (err.response && err.response.body && err.response.body.includes('window.self.location = ')) {
                   // This code is for marketo scripts
