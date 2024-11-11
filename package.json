@@ -47,8 +47,8 @@
     "@types/xmldom": "^0.1.29",
     "chai": "^4.2.0",
     "check-engine": "^1.8.1",
-    "grpc-tools": "^1.7.3",
     "grpc_tools_node_protoc_ts": "^2.5.1",
+    "grpc-tools": "^1.7.3",
     "mocha": "^6.1.4",
     "nyc": "^15.0.0",
     "sinon-chai": "^3.3.0",
@@ -60,6 +60,7 @@
   "dependencies": {
     "@run-crank/utilities": "^0.5.2",
     "axios": "^0.26.0",
+    "csv-string": "^4.1.1",
     "google-protobuf": "^3.8.0",
     "grpc": "^1.21.1",
     "https": "^1.0.0",

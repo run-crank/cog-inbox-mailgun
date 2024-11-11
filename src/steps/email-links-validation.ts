@@ -22,6 +22,12 @@ export class EmailLinksValidationStep extends BaseStep implements StepInterface 
     field: 'position',
     type: FieldDefinition.Type.NUMERIC,
     description: 'The nth message to check from the email\'s inbox',
+  }, {
+    field: 'passOnCodes',
+    type: FieldDefinition.Type.STRING,
+    optionality: FieldDefinition.Optionality.OPTIONAL,
+    description: 'Comma separated list of status codes to pass.',
+    help: 'Only neccessary if the links should pass on certain error codes. Example: 429, 999'
   }];
   protected expectedRecords: ExpectedRecord[] = [{
     id: 'eml',
@@ -73,6 +79,7 @@ export class EmailLinksValidationStep extends BaseStep implements StepInterface 
       const domain: string = stepData.email.split('@')[1];
       const authDomain: string = this.client.auth.get('domain').toString();
       const position: number = stepData.position;
+      const passOnCodes: string = stepData.passOnCodes ? stepData.passOnCodes.toString() : '';
 
       if (domain !== authDomain) {
         return this.error("Couldn't check %s's email: Only addresses with the %s domain can be checked.", [
@@ -135,7 +142,7 @@ export class EmailLinksValidationStep extends BaseStep implements StepInterface 
       const sanitizedUrls = this.sanitizeUrls(Array.from(urls.values()));
 
       // Evaluate every URLs to check which are broken
-      const response = await this.client.evaluateUrls(sanitizedUrls);
+      const response = await this.client.evaluateUrls(sanitizedUrls, passOnCodes);
 
       // Ignore URLs with /track?mktoTestLink in Email Link Validation. It is used to determine which email opens are from BOTs.
       // Let's suppress it from being displayed in the results of a scenario log.
