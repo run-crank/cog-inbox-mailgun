@@ -198,10 +198,10 @@ export class ClientWrapper {
     const checkUrls = async (urls) => {
       await Promise.all(urls.map((url) => {
         return new Promise((resolve) => {
-          this.request.get({ 
+          this.request.get({
             url: url.url,
             jar: true,
-            headers: { 'User-Agent': userAgent }
+            headers: { 'User-Agent': userAgent },
           })
             .then((response) => {
               // The following code will check for redirect urls from marketo forms

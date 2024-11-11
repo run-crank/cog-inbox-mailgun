@@ -27,7 +27,7 @@ export class EmailLinksValidationStep extends BaseStep implements StepInterface 
     type: FieldDefinition.Type.STRING,
     optionality: FieldDefinition.Optionality.OPTIONAL,
     description: 'Comma separated list of status codes to pass.',
-    help: 'Only neccessary if the links should pass on certain error codes. Example: 429, 999'
+    help: 'Only neccessary if the links should pass on certain error codes. Example: 429, 999',
   }];
   protected expectedRecords: ExpectedRecord[] = [{
     id: 'eml',
