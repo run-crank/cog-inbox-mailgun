@@ -210,7 +210,7 @@ export class ClientWrapper {
           return new Promise((resolve) => {
             // Check if the URL matches any string in the useDefaultUserAgent array
             const shouldUseNoHeaders = useDefaultUserAgent.some((host) => {
-              return url.url.includes(host); 
+              return url.url.includes(host);
             });
 
             const axiosOptions: any = {
