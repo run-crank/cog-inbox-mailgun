@@ -18,4 +18,4 @@ COPY --from=build /app .
 COPY . .
 EXPOSE 28866
 LABEL com.stackmoxie.cog-for="Inbox (Mailgun)"
-ENTRYPOINT ["/usr/local/bin/dumb-init", "--", "node", "build/core/grpc-server.js"]
+ENTRYPOINT ["/usr/local/bin/dumb-init", "--", "node","--max-http-header-size=65536", "build/core/grpc-server.js"]
