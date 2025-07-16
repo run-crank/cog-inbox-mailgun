@@ -62,10 +62,10 @@ export class EmailCountEqualsStep extends BaseStep implements StepInterface {
       let inbox: Inbox;
       let retryCount = 0;
       const maxRetries = 3;
-      
+
       while (retryCount < maxRetries) {
         inbox = await this.client.getInbox(stepData.email);
-        
+
         if (!inbox || inbox === null) {
           return this.error("There was a problem checking %s's email: no inbox found.", [
             stepData.email,
@@ -84,8 +84,8 @@ export class EmailCountEqualsStep extends BaseStep implements StepInterface {
         if (stepData.count === 0 || inbox.items.length === stepData.count || inbox.items.length > 0) {
           break; // Success or proceed with current state
         }
-        
-        retryCount++;
+
+        retryCount += 1;
         if (retryCount < maxRetries) {
           // Wait before retrying (exponential backoff: 1s, 2s, 4s)
           await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, retryCount - 1)));
