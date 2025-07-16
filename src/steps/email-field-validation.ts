@@ -50,6 +50,7 @@ export class EmailFieldValidationStep extends BaseStep implements StepInterface 
     try {
       const domain: string = stepData.email.split('@')[1];
       const authDomain: string = this.client.auth.get('domain').toString();
+      const position: number = stepData.position;
 
       if (domain !== authDomain) {
         return this.error("Couldn't check %s's email: Only addresses with the %s domain can be checked.", [
@@ -58,26 +59,45 @@ export class EmailFieldValidationStep extends BaseStep implements StepInterface 
         ]);
       }
 
-      const inbox: Inbox = await this.client.getInbox(stepData.email);
+      // Add retry logic for getInbox to handle transient API issues
+      let inbox: Inbox;
+      let retryCount = 0;
+      const maxRetries = 3;
+      
+      while (retryCount < maxRetries) {
+        inbox = await this.client.getInbox(stepData.email);
+        
+        if (!inbox || inbox === null) {
+          return this.error("There was a problem checking %s's email: no inbox found.", [
+            stepData.email,
+          ]);
+        }
 
-      if (!inbox || inbox === null) {
-        return this.error("There was a problem checking %s's email: no inbox found.", [
-          stepData.email,
-        ]);
+        if (inbox['message']) {
+          return this.error("There was a problem checking %s's email: %s", [
+            stepData.email,
+            inbox['message'],
+          ]);
+        }
+
+        // Ensure proper ordering
+        if (inbox.items) {
+          inbox.items.reverse();
+        }
+
+        // Check if we have the expected email, if not retry
+        if (inbox.items && inbox.items.length > 0 && inbox.items[position - 1]) {
+          break; // Success, we have the email
+        }
+        
+        retryCount++;
+        if (retryCount < maxRetries) {
+          // Wait before retrying (exponential backoff: 1s, 2s, 4s)
+          await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, retryCount - 1)));
+        }
       }
 
-      if (inbox['message']) {
-        return this.error("There was a problem checking %s's email: %s", [
-          stepData.email,
-          inbox['message'],
-        ]);
-      }
-
-      //// Ensure proper ordering
-      if (inbox.items) {
-        inbox.items.reverse();
-      }
-
+      let tableRecord;
       if (inbox.items.length > 1) {
         tableRecord = this.createRecords(inbox.items);
       }

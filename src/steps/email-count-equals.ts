@@ -58,19 +58,38 @@ export class EmailCountEqualsStep extends BaseStep implements StepInterface {
         ]);
       }
 
-      const inbox: Inbox = await this.client.getInbox(stepData.email);
+      // Add retry logic for getInbox to handle transient API issues
+      let inbox: Inbox;
+      let retryCount = 0;
+      const maxRetries = 3;
+      
+      while (retryCount < maxRetries) {
+        inbox = await this.client.getInbox(stepData.email);
+        
+        if (!inbox || inbox === null) {
+          return this.error("There was a problem checking %s's email: no inbox found.", [
+            stepData.email,
+          ]);
+        }
 
-      if (!inbox || inbox === null) {
-        return this.error("There was a problem checking %s's email: no inbox found.", [
-          stepData.email,
-        ]);
-      }
+        if (inbox['message']) {
+          return this.error("There was a problem checking %s's email: %s", [
+            stepData.email,
+            inbox['message'],
+          ]);
+        }
 
-      if (inbox['message']) {
-        return this.error("There was a problem checking %s's email: %s", [
-          stepData.email,
-          inbox['message'],
-        ]);
+        // If we expect emails but got none, retry (handles transient empty responses)
+        // If we expect 0 or we got the expected count, or we got some emails, proceed
+        if (stepData.count === 0 || inbox.items.length === stepData.count || inbox.items.length > 0) {
+          break; // Success or proceed with current state
+        }
+        
+        retryCount++;
+        if (retryCount < maxRetries) {
+          // Wait before retrying (exponential backoff: 1s, 2s, 4s)
+          await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, retryCount - 1)));
+        }
       }
 
       // tslint:disable-next-line:triple-equals
