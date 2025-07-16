@@ -77,19 +77,43 @@ export class EmailImagesValidationStep extends BaseStep implements StepInterface
         ]);
       }
 
-      const inbox: Inbox = await this.client.getInbox(stepData.email);
+      // Add retry logic for getInbox to handle transient API issues
+      let inbox: Inbox;
+      let retryCount = 0;
+      const maxRetries = 3;
 
-      if (!inbox || inbox === null) {
-        return this.error("There was a problem checking %s's email: no inbox found.", [
-          stepData.email,
-        ]);
-      }
+      while (retryCount < maxRetries) {
+        inbox = await this.client.getInbox(stepData.email);
 
-      if (inbox['message']) {
-        return this.error("There was a problem checking %s's email: %s", [
-          stepData.email,
-          inbox['message'],
-        ]);
+        if (!inbox || inbox === null) {
+          return this.error("There was a problem checking %s's email: no inbox found.", [
+            stepData.email,
+          ]);
+        }
+
+        if (inbox['message']) {
+          return this.error("There was a problem checking %s's email: %s", [
+            stepData.email,
+            inbox['message'],
+          ]);
+        }
+
+        // Check if we have the expected email, if not retry
+        if (inbox.items && inbox.items.length > 0 && inbox.items[position - 1]) {
+          break; // Success, we have the email
+        }
+
+        // Only retry if inbox is completely empty (timing issue)
+        // If inbox has items but not our position, it's likely a real error, not timing
+        if (inbox.items && inbox.items.length > 0) {
+          break; // Don't retry - inbox has emails, just not at our position
+        }
+
+        retryCount += 1;
+        if (retryCount < maxRetries) {
+          // Wait before retrying (exponential backoff: 1s, 2s, 4s)
+          await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, retryCount - 1)));
+        }
       }
 
       let messageRecords;
