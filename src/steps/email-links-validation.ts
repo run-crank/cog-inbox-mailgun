@@ -114,6 +114,12 @@ export class EmailLinksValidationStep extends BaseStep implements StepInterface 
           break; // Success, we have the email
         }
 
+        // Only retry if inbox is completely empty (timing issue)
+        // If inbox has items but not our position, it's likely a real error, not timing
+        if (inbox.items && inbox.items.length > 0) {
+          break; // Don't retry - inbox has emails, just not at our position
+        }
+
         retryCount += 1;
         if (retryCount < maxRetries) {
           // Wait before retrying (exponential backoff: 1s, 2s, 4s)

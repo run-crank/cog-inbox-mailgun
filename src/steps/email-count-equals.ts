@@ -85,6 +85,7 @@ export class EmailCountEqualsStep extends BaseStep implements StepInterface {
           break; // Success or proceed with current state
         }
 
+        // Only retry if we expect emails but got completely empty inbox
         retryCount += 1;
         if (retryCount < maxRetries) {
           // Wait before retrying (exponential backoff: 1s, 2s, 4s)
